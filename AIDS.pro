@@ -2,7 +2,7 @@ QT += core gui sql
 
 CONFIG += c++17
 
-TARGET = UniformManagementSystem
+TARGET = AIDS
 TEMPLATE = app
 
 # Include paths

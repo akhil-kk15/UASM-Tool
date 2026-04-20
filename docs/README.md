@@ -196,20 +196,20 @@ cmake -DCMAKE_PREFIX_PATH=/opt/Qt/6.x.x/gcc_64 ..
 ## Features Implemented
 
 ### Core Functionality
-- ✅ Employee CRUD operations
-- ✅ Uniform inventory management
-- ✅ Issue/Return tracking
-- ✅ SQLite database persistence
-- ✅ Table view for all entities
-- ✅ Dialog-based forms for data entry
-- ✅ Error handling and user feedback
+- Employee CRUD operations
+- Uniform inventory management
+- Issue/Return tracking
+- SQLite database persistence
+- Table view for all entities
+- Dialog-based forms for data entry
+- Error handling and user feedback
 
 ### UI/UX
-- ✅ Tab-based interface for organization
-- ✅ Qt Designer compatible UI files
-- ✅ Consistent button layout
-- ✅ Data validation in dialogs
-- ✅ Confirmation dialogs for destructive operations
+- Tab-based interface for organization
+- Qt Designer compatible UI files
+- Consistent button layout
+- Data validation in dialogs
+- Confirmation dialogs for destructive operations
 
 ## Usage Guide
 
