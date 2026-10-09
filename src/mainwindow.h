@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QTableWidgetItem>
 #include "databasemanager.h"
+#include "rotationscheduler.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -20,27 +21,46 @@ public:
     ~MainWindow();
 
 private slots:
+    // Employee slots
     void on_addEmployeeBtn_clicked();
     void on_editEmployeeBtn_clicked();
     void on_deleteEmployeeBtn_clicked();
     void on_refreshEmployeesBtn_clicked();
+
+    // Uniform slots
     void on_addUniformBtn_clicked();
     void on_editUniformBtn_clicked();
     void on_deleteUniformBtn_clicked();
     void on_refreshUniformsBtn_clicked();
+
+    // Issue slots
     void on_issueUniformBtn_clicked();
     void on_returnUniformBtn_clicked();
     void on_refreshIssuesBtn_clicked();
 
+    // Team & Staffing slots
+    void on_reassignStaffBtn_clicked();
+    void on_autoBalanceBtn_clicked();
+    void on_refreshTeamsBtn_clicked();
+    void on_teamsTable_itemSelectionChanged();
+
+    // Rotation schedule slots
+    void on_generateRotationBtn_clicked();
+    void on_rotationTeamCombo_currentIndexChanged(int index);
+
 private:
     Ui::MainWindow *ui;
     DatabaseManager m_db;
+    RotationScheduler m_scheduler;
 
+    void initializeDatabase();
     void loadEmployeesTable();
     void loadUniformsTable();
     void loadIssuesTable();
-    void initializeDatabase();
+    void loadTeamsTable();
+    void loadTeamMembersTable(const QString& teamName);
+    void populateRotationTeamCombo();
+    void displayRotationSchedule(const ShiftSchedule& schedule);
 };
 
 #endif // MAINWINDOW_H
-

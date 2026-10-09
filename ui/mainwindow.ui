@@ -309,6 +309,196 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="teamsTab">
+       <attribute name="title">
+        <string>Teams &amp; Staffing</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_teams">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_teams">
+          <item>
+           <widget class="QPushButton" name="reassignStaffBtn">
+            <property name="text">
+             <string>Reassign Employee (Uniform-Checked)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="autoBalanceBtn">
+            <property name="text">
+             <string>Auto-Balance Staff</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="refreshTeamsBtn">
+            <property name="text">
+             <string>Refresh Teams</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_teams">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QLabel" name="teamsTableLabel">
+          <property name="text">
+           <string>&lt;b&gt;Teams Overview (4 Tables per Team)&lt;/b&gt;</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTableWidget" name="teamsTable">
+          <property name="columnCount">
+           <number>7</number>
+          </property>
+          <column><property name="text"><string>ID</string></property></column>
+          <column><property name="text"><string>Team Name</string></property></column>
+          <column><property name="text"><string>Uniform Type</string></property></column>
+          <column><property name="text"><string>Current Staff</string></property></column>
+          <column><property name="text"><string>Target Staff</string></property></column>
+          <column><property name="text"><string>Staffing Status</string></property></column>
+          <column><property name="text"><string>Assigned Tables</string></property></column>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="teamMembersLabel">
+          <property name="text">
+           <string>&lt;b&gt;Selected Team Members&lt;/b&gt;</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTableWidget" name="teamMembersTable">
+          <property name="columnCount">
+           <number>5</number>
+          </property>
+          <column><property name="text"><string>ID</string></property></column>
+          <column><property name="text"><string>Name</string></property></column>
+          <column><property name="text"><string>Designation</string></property></column>
+          <column><property name="text"><string>Uniform Size</string></property></column>
+          <column><property name="text"><string>Issued Uniforms</string></property></column>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="rotationsTab">
+       <attribute name="title">
+        <string>Shift &amp; Table Rotation</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_rotations">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_rotations">
+          <item>
+           <widget class="QLabel" name="rotTeamLabel">
+            <property name="text">
+             <string>Team:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="rotationTeamCombo">
+            <property name="minimumWidth">
+             <number>150</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="rotDateLabel">
+            <property name="text">
+             <string>Date:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDateEdit" name="rotationDateEdit">
+            <property name="calendarPopup">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="rotStartLabel">
+            <property name="text">
+             <string>Start Time:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTimeEdit" name="rotationStartTimeEdit"/>
+          </item>
+          <item>
+           <widget class="QLabel" name="rotSlotLabel">
+            <property name="text">
+             <string>Slot Duration:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="rotationSlotCombo">
+            <item><property name="text"><string>30 Minutes</string></property></item>
+            <item><property name="text"><string>60 Minutes</string></property></item>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="generateRotationBtn">
+            <property name="text">
+             <string>Generate / Adjust Rotation</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_rot">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QLabel" name="rotationStatusLabel">
+          <property name="text">
+           <string>&lt;i&gt;Select a team and click 'Generate / Adjust Rotation' to calculate the 8-hour shift 4-table cycle with 30-min breaks.&lt;/i&gt;</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTableWidget" name="rotationTable">
+          <property name="columnCount">
+           <number>6</number>
+          </property>
+          <column><property name="text"><string>Time Slot</string></property></column>
+          <column><property name="text"><string>Table 1</string></property></column>
+          <column><property name="text"><string>Table 2</string></property></column>
+          <column><property name="text"><string>Table 3</string></property></column>
+          <column><property name="text"><string>Table 4</string></property></column>
+          <column><property name="text"><string>30-Min Break (Cycle)</string></property></column>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </item>
    </layout>

@@ -8,7 +8,7 @@ class Uniform
 public:
     Uniform();
     Uniform(int id, const QString& type, int quantity, const QString& size, 
-            const QString& color, const QString& description);
+            const QString& color, const QString& description, const QString& team = "");
 
     // Getters
     int getId() const;
@@ -17,6 +17,7 @@ public:
     QString getSize() const;
     QString getDescription() const;
     QString getColor() const;
+    QString getTeam() const;
 
     // Setters
     void setId(int id);
@@ -25,6 +26,7 @@ public:
     void setSize(const QString& size);
     void setDescription(const QString& description);
     void setColor(const QString& color);
+    void setTeam(const QString& team);
 
 private:
     int m_id;
@@ -33,6 +35,7 @@ private:
     QString m_size;
     QString m_description;
     QString m_color;
+    QString m_team;
 };
 
 #endif // UNIFORM_H

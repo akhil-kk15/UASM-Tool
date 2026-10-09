@@ -23,6 +23,7 @@ void UniformDialog::setUniform(const Uniform& uniform)
 {
     m_uniform = uniform;
     ui->typeEdit->setText(uniform.getType());
+    ui->teamEdit->setText(uniform.getTeam());
     ui->quantitySpinBox->setValue(uniform.getQuantity());
     ui->sizeEdit->setText(uniform.getSize());
     ui->colorEdit->setText(uniform.getColor());
@@ -31,11 +32,12 @@ void UniformDialog::setUniform(const Uniform& uniform)
 
 void UniformDialog::on_okBtn_clicked()
 {
-    m_uniform.setType(ui->typeEdit->text());
+    m_uniform.setType(ui->typeEdit->text().trimmed());
+    m_uniform.setTeam(ui->teamEdit->text().trimmed());
     m_uniform.setQuantity(ui->quantitySpinBox->value());
-    m_uniform.setSize(ui->sizeEdit->text());
-    m_uniform.setColor(ui->colorEdit->text());
-    m_uniform.setDescription(ui->descriptionEdit->toPlainText());
+    m_uniform.setSize(ui->sizeEdit->text().trimmed());
+    m_uniform.setColor(ui->colorEdit->text().trimmed());
+    m_uniform.setDescription(ui->descriptionEdit->toPlainText().trimmed());
     accept();
 }
 

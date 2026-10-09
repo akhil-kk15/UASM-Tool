@@ -11,6 +11,11 @@ build/
 *.swo
 *~
 
+# Ignore database and user files
+*.db
+*.pro.user
+cmake-build-*/
+
 # Ignore OS specific files
 .DS_Store
 Thumbs.db

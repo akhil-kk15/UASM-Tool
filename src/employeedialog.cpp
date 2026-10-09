@@ -24,12 +24,26 @@ void EmployeeDialog::setEmployee(const Employee& employee)
     m_employee = employee;
     ui->nameEdit->setText(employee.getName());
     ui->departmentEdit->setText(employee.getDepartment());
+    ui->designationEdit->setText(employee.getDesignation());
+    ui->emailEdit->setText(employee.getEmail());
+    ui->phoneEdit->setText(employee.getPhone());
+
+    int sizeIndex = ui->uniformSizeCombo->findText(employee.getUniformSize());
+    if (sizeIndex >= 0) {
+        ui->uniformSizeCombo->setCurrentIndex(sizeIndex);
+    } else {
+        ui->uniformSizeCombo->setCurrentText(employee.getUniformSize().isEmpty() ? "M" : employee.getUniformSize());
+    }
 }
 
 void EmployeeDialog::on_okBtn_clicked()
 {
-    m_employee.setName(ui->nameEdit->text());
-    m_employee.setDepartment(ui->departmentEdit->text());
+    m_employee.setName(ui->nameEdit->text().trimmed());
+    m_employee.setDepartment(ui->departmentEdit->text().trimmed());
+    m_employee.setDesignation(ui->designationEdit->text().trimmed());
+    m_employee.setEmail(ui->emailEdit->text().trimmed());
+    m_employee.setPhone(ui->phoneEdit->text().trimmed());
+    m_employee.setUniformSize(ui->uniformSizeCombo->currentText());
     accept();
 }
 

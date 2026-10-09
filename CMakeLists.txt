@@ -36,6 +36,13 @@ set(PROJECT_SOURCES
         src/issuedialog.h
         src/issuedialog.cpp
         ui/issuedialog.ui
+        src/team.h
+        src/team.cpp
+        src/rotationscheduler.h
+        src/rotationscheduler.cpp
+        src/reassigndialog.h
+        src/reassigndialog.cpp
+        ui/reassigndialog.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -81,3 +88,20 @@ install(TARGETS AIDS
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(AIDS)
 endif()
+
+add_executable(test_rotation_uniform
+    tests/test_rotation_uniform.cpp
+    src/employee.h
+    src/employee.cpp
+    src/uniform.h
+    src/uniform.cpp
+    src/uniformissue.h
+    src/uniformissue.cpp
+    src/team.h
+    src/team.cpp
+    src/rotationscheduler.h
+    src/rotationscheduler.cpp
+    src/databasemanager.h
+    src/databasemanager.cpp
+)
+target_link_libraries(test_rotation_uniform PRIVATE Qt${QT_VERSION_MAJOR}::Sql Qt${QT_VERSION_MAJOR}::Core)
