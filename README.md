@@ -80,13 +80,34 @@ Or run the test binary directly:
 ./build/test_rotation_uniform
 ```
 
-### Seed Test Database
+## Database Setup & Sample Data
 
-To populate the database with test teams (including Game Show Host teams), roles, inventory, and employees:
+A pre-populated sample database `uniformmanagement.db` is included directly in the repository root containing:
+- 5 Teams: 4 Standard Dealer teams and 1 dedicated Game Show Host team (`Studio Live`).
+- 24 Employees: configured with `Dealer`, `Game Show Host`, and `Both` role types.
+- Complete Uniform Inventory: across sizes (`S`, `M`, `L`, `XL`), colors, and teams (including intentional out-of-stock scenarios to demonstrate uniform-checked fallback redirection).
+- Transactional records for uniform allocations and returns.
+
+### How to Populate or Reset the Database
+
+To initialize or reset the database from scratch at any time using the seed SQL script:
 
 ```bash
+# 1. Populate the SQLite database in the project root
 sqlite3 uniformmanagement.db < seed_test_data.sql
+
+# 2. Copy to the build directory so the application binary accesses the updated database
 cp uniformmanagement.db build/uniformmanagement.db
+```
+
+### How to Verify Database Records
+
+Inspect the populated records using the `sqlite3` CLI:
+
+```bash
+sqlite3 uniformmanagement.db "SELECT id, name, team_type, uniform_type FROM teams;"
+sqlite3 uniformmanagement.db "SELECT id, name, department, role_type, uniform_size FROM employees LIMIT 10;"
+sqlite3 uniformmanagement.db "SELECT id, type, team, size, quantity FROM uniforms;"
 ```
 
 ---

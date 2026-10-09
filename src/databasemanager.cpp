@@ -15,10 +15,10 @@ DatabaseManager::~DatabaseManager()
     closeDatabase();
 }
 
-bool DatabaseManager::initializeDatabase()
+bool DatabaseManager::initializeDatabase(const QString& dbPath)
 {
     m_database = QSqlDatabase::addDatabase("QSQLITE");
-    m_database.setDatabaseName("uniformmanagement.db");
+    m_database.setDatabaseName(dbPath.isEmpty() ? "uniformmanagement.db" : dbPath);
 
     if (!m_database.open()) {
         m_lastError = "Failed to open database: " + m_database.lastError().text();

@@ -16,7 +16,7 @@ public:
     ~DatabaseManager();
 
     // Database initialization
-    bool initializeDatabase();
+    bool initializeDatabase(const QString& dbPath = "uniformmanagement.db");
     void closeDatabase();
 
     // Employee operations

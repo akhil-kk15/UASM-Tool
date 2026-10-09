@@ -14,11 +14,12 @@ int main(int argc, char* argv[])
 {
     QCoreApplication app(argc, argv);
 
-    // Remove any previous test database
-    QFile::remove("uniformmanagement.db");
+    // Use dedicated isolated test database to protect sample database
+    const QString testDbName = "test_uniformmanagement.db";
+    QFile::remove(testDbName);
 
     DatabaseManager db;
-    bool dbInit = db.initializeDatabase();
+    bool dbInit = db.initializeDatabase(testDbName);
     assert(dbInit && "Database initialization must succeed");
 
     std::cout << "[PASS] Database initialized successfully." << std::endl;
@@ -202,5 +203,7 @@ int main(int argc, char* argv[])
               << maxConsecutive << ")." << std::endl;
 
     std::cout << "\nALL TEST SUITE CHECKS COMPLETED SUCCESSFULLY!" << std::endl;
+    db.closeDatabase();
+    QFile::remove(testDbName);
     return 0;
 }
