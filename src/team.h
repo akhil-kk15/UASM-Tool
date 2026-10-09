@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <QStringList>
+#include "employee.h"
 
 class Team
 {
@@ -16,7 +17,8 @@ public:
 
     Team();
     Team(int id, const QString& name, const QString& uniformType = "Standard",
-         int targetStaff = 5, int minStaff = 4, int maxStaff = 7);
+         int targetStaff = 5, int minStaff = 4, int maxStaff = 7,
+         const QString& teamType = "Standard");
 
     // Getters
     int getId() const;
@@ -27,6 +29,10 @@ public:
     int getMaxStaff() const;
     int getTableCount() const;
     QStringList getAssignedTables() const;
+    QString getTeamType() const; // "Standard", "Game Show Host"
+
+    bool isGameShowTeam() const;
+    bool acceptsEmployee(const Employee& emp) const;
 
     // Setters
     void setId(int id);
@@ -35,6 +41,7 @@ public:
     void setMinStaff(int minStaff);
     void setTargetStaff(int targetStaff);
     void setMaxStaff(int maxStaff);
+    void setTeamType(const QString& teamType);
 
     // Staffing analysis
     StaffingStatus evaluateStaffing(int currentStaffCount) const;
@@ -50,6 +57,7 @@ private:
     int m_targetStaff;
     int m_maxStaff;
     int m_tableCount; // Fixed at 4 tables per team
+    QString m_teamType; // "Standard", "Game Show Host"
 };
 
 #endif // TEAM_H

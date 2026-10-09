@@ -22,7 +22,7 @@ struct RotationSlot {
     QTime endTime;
     QList<TableAssignment> tableAssignments; // 4 tables
     QList<int> onBreakEmployeeIds;
-    QStringList onBreakEmployeeNames;
+    QStringList onBreakEmployeeNames;        // Table 5 (30-Min Break)
 };
 
 struct ShiftSchedule {
@@ -58,12 +58,13 @@ public:
 
     void setDatabaseManager(DatabaseManager* dbManager);
 
-    // Schedule generation
+    // Schedule generation: 16 tables per employee across 4 rounds of 2 hours, Table 5 is a 30-min break
     ShiftSchedule generate8HourSchedule(const Team& team,
                                        const QList<Employee>& members,
                                        const QDate& date = QDate::currentDate(),
                                        const QTime& startTime = QTime(8, 0),
-                                       int slotMinutes = 30);
+                                       int slotMinutes = 30,
+                                       int numSlots = 20);
 
     // Reassignment with uniform availability checking & fallback redirection
     ReassignmentResult reassignEmployee(int employeeId,
@@ -74,7 +75,8 @@ public:
     ShiftSchedule adjustTeamRotation(const QString& teamName,
                                      const QDate& date = QDate::currentDate(),
                                      const QTime& startTime = QTime(8, 0),
-                                     int slotMinutes = 30);
+                                     int slotMinutes = 30,
+                                     int numSlots = 20);
 
 private:
     DatabaseManager* m_dbManager;

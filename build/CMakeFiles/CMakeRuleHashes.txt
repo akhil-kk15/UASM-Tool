@@ -1,3 +1,0 @@
-# Hashes of file build rules.
-e52874f8481dbb8881246e7ee6ceb614 CMakeFiles/UniformManagementSystem_autogen
-31e5f89bfc3f6ebd354c4a72ac9b2059 UniformManagementSystem_autogen/timestamp

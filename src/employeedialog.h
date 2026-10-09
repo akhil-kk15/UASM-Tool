@@ -18,6 +18,7 @@ public:
 
     Employee getEmployee() const;
     void setEmployee(const Employee& employee);
+    void setTeamList(const QStringList& teams);
 
 private slots:
     void on_okBtn_clicked();

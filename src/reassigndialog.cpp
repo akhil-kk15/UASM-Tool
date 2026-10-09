@@ -14,7 +14,7 @@ ReassignDialog::ReassignDialog(DatabaseManager* dbManager, QWidget *parent)
     QList<Employee> employees = m_dbManager->getAllEmployees();
     for (const Employee& emp : employees) {
         ui->employeeCombo->addItem(
-            QString("%1 (Current: %2 | Size: %3)").arg(emp.getName(), emp.getDepartment(), emp.getUniformSize()),
+            QString("%1 (Role: %2 | Current: %3 | Size: %4)").arg(emp.getName(), emp.getRoleType(), emp.getDepartment(), emp.getUniformSize()),
             emp.getId()
         );
     }
@@ -22,7 +22,10 @@ ReassignDialog::ReassignDialog(DatabaseManager* dbManager, QWidget *parent)
     // Populate teams
     QList<Team> teams = m_dbManager->getAllTeams();
     for (const Team& team : teams) {
-        ui->targetTeamCombo->addItem(team.getName(), team.getId());
+        ui->targetTeamCombo->addItem(
+            QString("%1 [%2]").arg(team.getName(), team.getTeamType()),
+            team.getName()
+        );
     }
 
     connect(ui->employeeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -53,8 +56,8 @@ void ReassignDialog::onEmployeeChanged(int index)
 
     Employee emp = m_dbManager->getEmployee(empId);
     ui->currentDetailsLabel->setText(
-        QString("<b>%1</b> | Team: <b>%2</b> | Uniform Size: <b>%3</b>")
-        .arg(emp.getName(), emp.getDepartment(), emp.getUniformSize())
+        QString("<b>%1</b> | Role: <b>%2</b> | Team: <b>%3</b> | Uniform Size: <b>%4</b>")
+        .arg(emp.getName(), emp.getRoleType(), emp.getDepartment(), emp.getUniformSize())
     );
 
     updateStockStatus();
@@ -69,13 +72,29 @@ void ReassignDialog::onTargetTeamChanged(int index)
 void ReassignDialog::updateStockStatus()
 {
     int empId = ui->employeeCombo->currentData().toInt();
-    QString targetTeamName = ui->targetTeamCombo->currentText();
+    QString targetTeamName = ui->targetTeamCombo->currentData().toString();
     if (empId <= 0 || targetTeamName.isEmpty()) return;
 
     Employee emp = m_dbManager->getEmployee(empId);
     QString size = emp.getUniformSize().isEmpty() ? "M" : emp.getUniformSize();
     Team targetTeam = m_dbManager->getTeamByName(targetTeamName);
 
+    // 1. Role compatibility check
+    if (!targetTeam.acceptsEmployee(emp)) {
+        QString note = targetTeam.isGameShowTeam()
+            ? "Game Show Host teams require role 'Game Show Host' or 'Both'."
+            : "Standard Dealer teams require role 'Dealer' or 'Both'.";
+        ui->stockStatusLabel->setText(
+            QString("<font color='red'><b>Incompatible Role:</b> %1 (%2) cannot join %3 (%4).<br><i>%5</i></font>")
+            .arg(emp.getName(), emp.getRoleType(), targetTeam.getName(), targetTeam.getTeamType(), note)
+        );
+        ui->reassignBtn->setEnabled(false);
+        return;
+    }
+
+    ui->reassignBtn->setEnabled(true);
+
+    // 2. Uniform stock check
     int count = m_dbManager->getAvailableUniformCountForTeam(targetTeamName, targetTeam.getUniformType(), size);
     if (count > 0) {
         ui->stockStatusLabel->setText(
@@ -85,7 +104,7 @@ void ReassignDialog::updateStockStatus()
     } else {
         ui->stockStatusLabel->setText(
             QString("<font color='red'><b>Out of Stock in Size %1!</b></font><br>"
-                    "<i>System will automatically search and redirect to an alternative team with available stock.</i>")
+                    "<i>System will automatically search and redirect to a compatible alternative team with available stock.</i>")
             .arg(size)
         );
     }
@@ -94,7 +113,7 @@ void ReassignDialog::updateStockStatus()
 void ReassignDialog::on_reassignBtn_clicked()
 {
     int empId = ui->employeeCombo->currentData().toInt();
-    QString targetTeam = ui->targetTeamCombo->currentText();
+    QString targetTeam = ui->targetTeamCombo->currentData().toString();
     QString reason = ui->reasonEdit->text().trimmed();
 
     if (empId <= 0) {

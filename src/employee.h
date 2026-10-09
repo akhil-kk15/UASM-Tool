@@ -9,7 +9,8 @@ public:
     Employee();
     Employee(int id, const QString& name, const QString& department, 
              const QString& designation = "", const QString& uniformSize = "M",
-             const QString& email = "", const QString& phone = "");
+             const QString& email = "", const QString& phone = "",
+             const QString& roleType = "Dealer");
 
     // Getters
     int getId() const;
@@ -20,6 +21,11 @@ public:
     QString getUniformSize() const;
     QString getEmail() const;
     QString getPhone() const;
+    QString getRoleType() const;
+
+    // Role helpers
+    bool canDeal() const;
+    bool canHostGameShow() const;
 
     // Setters
     void setId(int id);
@@ -30,6 +36,7 @@ public:
     void setUniformSize(const QString& uniformSize);
     void setEmail(const QString& email);
     void setPhone(const QString& phone);
+    void setRoleType(const QString& roleType);
 
 private:
     int m_id;
@@ -39,6 +46,7 @@ private:
     QString m_uniformSize;
     QString m_email;
     QString m_phone;
+    QString m_roleType; // "Dealer", "Game Show Host", "Both"
 };
 
 #endif // EMPLOYEE_H

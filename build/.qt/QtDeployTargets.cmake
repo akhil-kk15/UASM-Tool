@@ -1,2 +1,0 @@
-set(__QT_DEPLOY_TARGET_UniformManagementSystem_FILE /home/akhilkk/Projects/AIDS/build/UniformManagementSystem)
-set(__QT_DEPLOY_TARGET_UniformManagementSystem_TYPE EXECUTABLE)

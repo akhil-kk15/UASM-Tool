@@ -1,9 +1,0 @@
-/home/akhilkk/Projects/AIDS/build/CMakeFiles/UniformManagementSystem.dir
-/home/akhilkk/Projects/AIDS/build/CMakeFiles/edit_cache.dir
-/home/akhilkk/Projects/AIDS/build/CMakeFiles/rebuild_cache.dir
-/home/akhilkk/Projects/AIDS/build/CMakeFiles/list_install_components.dir
-/home/akhilkk/Projects/AIDS/build/CMakeFiles/install.dir
-/home/akhilkk/Projects/AIDS/build/CMakeFiles/install/local.dir
-/home/akhilkk/Projects/AIDS/build/CMakeFiles/install/strip.dir
-/home/akhilkk/Projects/AIDS/build/CMakeFiles/UniformManagementSystem_autogen_timestamp_deps.dir
-/home/akhilkk/Projects/AIDS/build/CMakeFiles/UniformManagementSystem_autogen.dir

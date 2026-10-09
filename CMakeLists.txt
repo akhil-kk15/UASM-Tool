@@ -105,3 +105,6 @@ add_executable(test_rotation_uniform
     src/databasemanager.cpp
 )
 target_link_libraries(test_rotation_uniform PRIVATE Qt${QT_VERSION_MAJOR}::Sql Qt${QT_VERSION_MAJOR}::Core)
+
+enable_testing()
+add_test(NAME test_rotation_uniform COMMAND test_rotation_uniform)

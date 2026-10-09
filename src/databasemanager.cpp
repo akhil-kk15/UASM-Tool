@@ -55,7 +55,8 @@ bool DatabaseManager::createTables()
                     "designation TEXT,"
                     "uniform_size TEXT DEFAULT 'M',"
                     "email TEXT,"
-                    "phone TEXT"
+                    "phone TEXT,"
+                    "role_type TEXT DEFAULT 'Dealer'"
                     ")")) {
         m_lastError = query.lastError().text();
         return false;
@@ -98,7 +99,8 @@ bool DatabaseManager::createTables()
                     "uniform_type TEXT,"
                     "target_staff INTEGER DEFAULT 5,"
                     "min_staff INTEGER DEFAULT 4,"
-                    "max_staff INTEGER DEFAULT 7"
+                    "max_staff INTEGER DEFAULT 7,"
+                    "team_type TEXT DEFAULT 'Standard'"
                     ")")) {
         m_lastError = query.lastError().text();
         return false;
@@ -130,7 +132,9 @@ bool DatabaseManager::upgradeTablesIfNeeded()
     query.exec("ALTER TABLE employees ADD COLUMN uniform_size TEXT DEFAULT 'M';");
     query.exec("ALTER TABLE employees ADD COLUMN email TEXT;");
     query.exec("ALTER TABLE employees ADD COLUMN phone TEXT;");
+    query.exec("ALTER TABLE employees ADD COLUMN role_type TEXT DEFAULT 'Dealer';");
     query.exec("ALTER TABLE uniforms ADD COLUMN team TEXT DEFAULT '';");
+    query.exec("ALTER TABLE teams ADD COLUMN team_type TEXT DEFAULT 'Standard';");
     return true;
 }
 
@@ -138,9 +142,10 @@ void DatabaseManager::seedDefaultTeamsIfEmpty()
 {
     QSqlQuery checkQuery("SELECT COUNT(*) FROM teams");
     if (checkQuery.next() && checkQuery.value(0).toInt() == 0) {
-        addTeam(Team(1, "Team Alpha", "Alpha Uniform", 5, 4, 7));
-        addTeam(Team(2, "Team Beta", "Beta Uniform", 5, 4, 7));
-        addTeam(Team(3, "Team Gamma", "Gamma Uniform", 5, 4, 7));
+        addTeam(Team(1, "Team Alpha", "Alpha Uniform", 5, 4, 7, "Standard"));
+        addTeam(Team(2, "Team Beta", "Beta Uniform", 5, 4, 7, "Standard"));
+        addTeam(Team(3, "Team Gamma", "Gamma Uniform", 5, 4, 7, "Standard"));
+        addTeam(Team(4, "Studio Live", "Studio Gold", 5, 4, 7, "Game Show Host"));
     }
 }
 
@@ -148,14 +153,15 @@ void DatabaseManager::seedDefaultTeamsIfEmpty()
 bool DatabaseManager::addEmployee(const Employee& employee)
 {
     QSqlQuery query;
-    query.prepare("INSERT INTO employees (name, department, designation, uniform_size, email, phone) "
-                  "VALUES (:name, :department, :designation, :uniform_size, :email, :phone)");
+    query.prepare("INSERT INTO employees (name, department, designation, uniform_size, email, phone, role_type) "
+                  "VALUES (:name, :department, :designation, :uniform_size, :email, :phone, :role_type)");
     query.bindValue(":name", employee.getName());
     query.bindValue(":department", employee.getDepartment());
     query.bindValue(":designation", employee.getDesignation());
     query.bindValue(":uniform_size", employee.getUniformSize().isEmpty() ? "M" : employee.getUniformSize());
     query.bindValue(":email", employee.getEmail());
     query.bindValue(":phone", employee.getPhone());
+    query.bindValue(":role_type", employee.getRoleType().isEmpty() ? "Dealer" : employee.getRoleType());
 
     if (!query.exec()) {
         m_lastError = query.lastError().text();
@@ -168,13 +174,14 @@ bool DatabaseManager::updateEmployee(const Employee& employee)
 {
     QSqlQuery query;
     query.prepare("UPDATE employees SET name=:name, department=:department, designation=:designation, "
-                  "uniform_size=:uniform_size, email=:email, phone=:phone WHERE id=:id");
+                  "uniform_size=:uniform_size, email=:email, phone=:phone, role_type=:role_type WHERE id=:id");
     query.bindValue(":name", employee.getName());
     query.bindValue(":department", employee.getDepartment());
     query.bindValue(":designation", employee.getDesignation());
     query.bindValue(":uniform_size", employee.getUniformSize().isEmpty() ? "M" : employee.getUniformSize());
     query.bindValue(":email", employee.getEmail());
     query.bindValue(":phone", employee.getPhone());
+    query.bindValue(":role_type", employee.getRoleType().isEmpty() ? "Dealer" : employee.getRoleType());
     query.bindValue(":id", employee.getId());
 
     if (!query.exec()) {
@@ -226,6 +233,8 @@ Employee DatabaseManager::getEmployee(int employeeId)
         employee.setUniformSize(query.value("uniform_size").toString());
         employee.setEmail(query.value("email").toString());
         employee.setPhone(query.value("phone").toString());
+        QString role = query.value("role_type").toString();
+        employee.setRoleType(role.isEmpty() ? "Dealer" : role);
         return employee;
     }
     m_lastError = query.lastError().text();
@@ -246,6 +255,8 @@ QList<Employee> DatabaseManager::getAllEmployees()
         employee.setUniformSize(query.value("uniform_size").toString());
         employee.setEmail(query.value("email").toString());
         employee.setPhone(query.value("phone").toString());
+        QString role = query.value("role_type").toString();
+        employee.setRoleType(role.isEmpty() ? "Dealer" : role);
         employees.append(employee);
     }
 
@@ -269,6 +280,8 @@ QList<Employee> DatabaseManager::getEmployeesByTeam(const QString& teamName)
             employee.setUniformSize(query.value("uniform_size").toString());
             employee.setEmail(query.value("email").toString());
             employee.setPhone(query.value("phone").toString());
+            QString role = query.value("role_type").toString();
+            employee.setRoleType(role.isEmpty() ? "Dealer" : role);
             employees.append(employee);
         }
     }
@@ -279,13 +292,14 @@ QList<Employee> DatabaseManager::getEmployeesByTeam(const QString& teamName)
 bool DatabaseManager::addTeam(const Team& team)
 {
     QSqlQuery query;
-    query.prepare("INSERT INTO teams (name, uniform_type, target_staff, min_staff, max_staff) "
-                  "VALUES (:name, :uniform_type, :target_staff, :min_staff, :max_staff)");
+    query.prepare("INSERT INTO teams (name, uniform_type, target_staff, min_staff, max_staff, team_type) "
+                  "VALUES (:name, :uniform_type, :target_staff, :min_staff, :max_staff, :team_type)");
     query.bindValue(":name", team.getName());
     query.bindValue(":uniform_type", team.getUniformType());
     query.bindValue(":target_staff", team.getTargetStaff());
     query.bindValue(":min_staff", team.getMinStaff());
     query.bindValue(":max_staff", team.getMaxStaff());
+    query.bindValue(":team_type", team.getTeamType().isEmpty() ? "Standard" : team.getTeamType());
 
     if (!query.exec()) {
         m_lastError = query.lastError().text();
@@ -298,12 +312,13 @@ bool DatabaseManager::updateTeam(const Team& team)
 {
     QSqlQuery query;
     query.prepare("UPDATE teams SET name=:name, uniform_type=:uniform_type, target_staff=:target_staff, "
-                  "min_staff=:min_staff, max_staff=:max_staff WHERE id=:id");
+                  "min_staff=:min_staff, max_staff=:max_staff, team_type=:team_type WHERE id=:id");
     query.bindValue(":name", team.getName());
     query.bindValue(":uniform_type", team.getUniformType());
     query.bindValue(":target_staff", team.getTargetStaff());
     query.bindValue(":min_staff", team.getMinStaff());
     query.bindValue(":max_staff", team.getMaxStaff());
+    query.bindValue(":team_type", team.getTeamType().isEmpty() ? "Standard" : team.getTeamType());
     query.bindValue(":id", team.getId());
 
     if (!query.exec()) {
@@ -340,6 +355,8 @@ Team DatabaseManager::getTeam(int teamId)
         team.setTargetStaff(query.value("target_staff").toInt());
         team.setMinStaff(query.value("min_staff").toInt());
         team.setMaxStaff(query.value("max_staff").toInt());
+        QString type = query.value("team_type").toString();
+        team.setTeamType(type.isEmpty() ? "Standard" : type);
         return team;
     }
     m_lastError = query.lastError().text();
@@ -360,6 +377,8 @@ Team DatabaseManager::getTeamByName(const QString& teamName)
         team.setTargetStaff(query.value("target_staff").toInt());
         team.setMinStaff(query.value("min_staff").toInt());
         team.setMaxStaff(query.value("max_staff").toInt());
+        QString type = query.value("team_type").toString();
+        team.setTeamType(type.isEmpty() ? "Standard" : type);
         return team;
     }
     m_lastError = query.lastError().text();
@@ -379,6 +398,8 @@ QList<Team> DatabaseManager::getAllTeams()
         team.setTargetStaff(query.value("target_staff").toInt());
         team.setMinStaff(query.value("min_staff").toInt());
         team.setMaxStaff(query.value("max_staff").toInt());
+        QString type = query.value("team_type").toString();
+        team.setTeamType(type.isEmpty() ? "Standard" : type);
         teams.append(team);
     }
     return teams;

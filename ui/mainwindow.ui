@@ -73,7 +73,7 @@
         <item>
          <widget class="QTableWidget" name="employeesTable">
           <property name="columnCount">
-           <number>8</number>
+           <number>7</number>
           </property>
           <attribute name="horizontalHeaderStretchLastSection">
            <bool>false</bool>
@@ -90,22 +90,17 @@
           </column>
           <column>
            <property name="text">
+            <string>Role Type</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
             <string>Designation</string>
            </property>
           </column>
           <column>
            <property name="text">
-            <string>Department</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Email</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Phone</string>
+            <string>Team</string>
            </property>
           </column>
           <column>
@@ -115,7 +110,7 @@
           </column>
           <column>
            <property name="text">
-            <string>Joining Date</string>
+            <string>Issued Uniforms</string>
            </property>
           </column>
          </widget>
@@ -362,10 +357,11 @@
         <item>
          <widget class="QTableWidget" name="teamsTable">
           <property name="columnCount">
-           <number>7</number>
+           <number>8</number>
           </property>
           <column><property name="text"><string>ID</string></property></column>
           <column><property name="text"><string>Team Name</string></property></column>
+          <column><property name="text"><string>Team Type</string></property></column>
           <column><property name="text"><string>Uniform Type</string></property></column>
           <column><property name="text"><string>Current Staff</string></property></column>
           <column><property name="text"><string>Target Staff</string></property></column>
@@ -442,14 +438,14 @@
           <item>
            <widget class="QLabel" name="rotSlotLabel">
             <property name="text">
-             <string>Slot Duration:</string>
+             <string>Rotation Type:</string>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QComboBox" name="rotationSlotCombo">
-            <item><property name="text"><string>30 Minutes</string></property></item>
-            <item><property name="text"><string>60 Minutes</string></property></item>
+            <item><property name="text"><string>30 Mins</string></property></item>
+            <item><property name="text"><string>40 Mins</string></property></item>
            </widget>
           </item>
           <item>
@@ -494,7 +490,7 @@
           <column><property name="text"><string>Table 2</string></property></column>
           <column><property name="text"><string>Table 3</string></property></column>
           <column><property name="text"><string>Table 4</string></property></column>
-          <column><property name="text"><string>30-Min Break (Cycle)</string></property></column>
+          <column><property name="text"><string>Table 5 (30-Min Break)</string></property></column>
          </widget>
         </item>
        </layout>

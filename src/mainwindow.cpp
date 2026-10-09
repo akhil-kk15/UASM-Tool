@@ -52,9 +52,9 @@ void MainWindow::initializeDatabase()
 void MainWindow::loadEmployeesTable()
 {
     ui->employeesTable->setRowCount(0);
-    ui->employeesTable->setColumnCount(6);
+    ui->employeesTable->setColumnCount(7);
     QStringList headers;
-    headers << "ID" << "Name" << "Designation" << "Team" << "Uniform Size" << "Issued Uniforms";
+    headers << "ID" << "Name" << "Role Type" << "Designation" << "Team" << "Uniform Size" << "Issued Uniforms";
     ui->employeesTable->setHorizontalHeaderLabels(headers);
     
     QList<Employee> employees = m_db.getAllEmployees();
@@ -63,9 +63,10 @@ void MainWindow::loadEmployeesTable()
         ui->employeesTable->insertRow(i);
         ui->employeesTable->setItem(i, 0, new QTableWidgetItem(QString::number(employees[i].getId())));
         ui->employeesTable->setItem(i, 1, new QTableWidgetItem(employees[i].getName()));
-        ui->employeesTable->setItem(i, 2, new QTableWidgetItem(employees[i].getDesignation()));
-        ui->employeesTable->setItem(i, 3, new QTableWidgetItem(employees[i].getDepartment()));
-        ui->employeesTable->setItem(i, 4, new QTableWidgetItem(employees[i].getUniformSize()));
+        ui->employeesTable->setItem(i, 2, new QTableWidgetItem(employees[i].getRoleType()));
+        ui->employeesTable->setItem(i, 3, new QTableWidgetItem(employees[i].getDesignation()));
+        ui->employeesTable->setItem(i, 4, new QTableWidgetItem(employees[i].getDepartment()));
+        ui->employeesTable->setItem(i, 5, new QTableWidgetItem(employees[i].getUniformSize()));
         
         // Issued uniforms count
         QList<UniformIssue> issues = m_db.getIssueHistory(employees[i].getId());
@@ -75,7 +76,7 @@ void MainWindow::loadEmployeesTable()
                 issuedCount += issue.getQuantity();
             }
         }
-        ui->employeesTable->setItem(i, 5, new QTableWidgetItem(QString::number(issuedCount)));
+        ui->employeesTable->setItem(i, 6, new QTableWidgetItem(QString::number(issuedCount)));
     }
 }
 
@@ -135,9 +136,9 @@ void MainWindow::loadIssuesTable()
 void MainWindow::loadTeamsTable()
 {
     ui->teamsTable->setRowCount(0);
-    ui->teamsTable->setColumnCount(7);
+    ui->teamsTable->setColumnCount(8);
     QStringList headers;
-    headers << "ID" << "Team Name" << "Uniform Type" << "Current Staff" << "Target Staff" << "Staffing Status" << "Assigned Tables";
+    headers << "ID" << "Team Name" << "Team Type" << "Uniform Type" << "Current Staff" << "Target Staff" << "Staffing Status" << "Assigned Tables";
     ui->teamsTable->setHorizontalHeaderLabels(headers);
 
     QList<Team> teams = m_db.getAllTeams();
@@ -147,9 +148,10 @@ void MainWindow::loadTeamsTable()
         ui->teamsTable->insertRow(i);
         ui->teamsTable->setItem(i, 0, new QTableWidgetItem(QString::number(teams[i].getId())));
         ui->teamsTable->setItem(i, 1, new QTableWidgetItem(teams[i].getName()));
-        ui->teamsTable->setItem(i, 2, new QTableWidgetItem(teams[i].getUniformType()));
-        ui->teamsTable->setItem(i, 3, new QTableWidgetItem(QString::number(currentStaff)));
-        ui->teamsTable->setItem(i, 4, new QTableWidgetItem(QString::number(teams[i].getTargetStaff())));
+        ui->teamsTable->setItem(i, 2, new QTableWidgetItem(teams[i].getTeamType()));
+        ui->teamsTable->setItem(i, 3, new QTableWidgetItem(teams[i].getUniformType()));
+        ui->teamsTable->setItem(i, 4, new QTableWidgetItem(QString::number(currentStaff)));
+        ui->teamsTable->setItem(i, 5, new QTableWidgetItem(QString::number(teams[i].getTargetStaff())));
 
         QString statusStr = teams[i].getStaffingStatusString(currentStaff);
         QTableWidgetItem* statusItem = new QTableWidgetItem(statusStr);
@@ -165,8 +167,8 @@ void MainWindow::loadTeamsTable()
             statusItem->setBackground(QColor("#cce5ff"));
             statusItem->setForeground(QColor("#004085"));
         }
-        ui->teamsTable->setItem(i, 5, statusItem);
-        ui->teamsTable->setItem(i, 6, new QTableWidgetItem("4 Tables (Tables 1 - 4)"));
+        ui->teamsTable->setItem(i, 6, statusItem);
+        ui->teamsTable->setItem(i, 7, new QTableWidgetItem("4 Tables (Tables 1 - 4)"));
     }
 
     if (teams.size() > 0) {
@@ -225,12 +227,23 @@ void MainWindow::on_generateRotationBtn_clicked()
 
     QDate date = ui->rotationDateEdit->date();
     QTime startTime = ui->rotationStartTimeEdit->time();
-    int slotMinutes = (ui->rotationSlotCombo->currentIndex() == 1) ? 60 : 30;
+    int comboIndex = ui->rotationSlotCombo->currentIndex();
+    QString comboText = ui->rotationSlotCombo->currentText();
+    int slotMinutes = 30;
+    int numSlots = 20;
+
+    if (comboText.contains("40") || comboIndex == 1) {
+        slotMinutes = 40;
+        numSlots = 20;
+    } else {
+        slotMinutes = 30;
+        numSlots = 20;
+    }
 
     Team team = m_db.getTeamByName(teamName);
     QList<Employee> members = m_db.getEmployeesByTeam(teamName);
 
-    ShiftSchedule schedule = m_scheduler.generate8HourSchedule(team, members, date, startTime, slotMinutes);
+    ShiftSchedule schedule = m_scheduler.generate8HourSchedule(team, members, date, startTime, slotMinutes, numSlots);
     displayRotationSchedule(schedule);
 }
 
@@ -245,7 +258,7 @@ void MainWindow::displayRotationSchedule(const ShiftSchedule& schedule)
     ui->rotationTable->setRowCount(0);
     ui->rotationTable->setColumnCount(6);
     QStringList headers;
-    headers << "Time Slot" << "Table 1" << "Table 2" << "Table 3" << "Table 4" << "30-Min Break (Cycle)";
+    headers << "Time Slot" << "Table 1" << "Table 2" << "Table 3" << "Table 4" << "Table 5 (Break)";
     ui->rotationTable->setHorizontalHeaderLabels(headers);
 
     ui->rotationStatusLabel->setText(
@@ -382,6 +395,12 @@ void MainWindow::on_refreshTeamsBtn_clicked()
 void MainWindow::on_addEmployeeBtn_clicked()
 {
     EmployeeDialog dialog(this);
+    QStringList teamNames;
+    for (const Team& t : m_db.getAllTeams()) {
+        teamNames << t.getName();
+    }
+    dialog.setTeamList(teamNames);
+
     if (dialog.exec() == QDialog::Accepted) {
         Employee emp = dialog.getEmployee();
         if (m_db.addEmployee(emp)) {
@@ -406,6 +425,11 @@ void MainWindow::on_editEmployeeBtn_clicked()
     Employee emp = m_db.getEmployee(employeeId);
     
     EmployeeDialog dialog(this);
+    QStringList teamNames;
+    for (const Team& t : m_db.getAllTeams()) {
+        teamNames << t.getName();
+    }
+    dialog.setTeamList(teamNames);
     dialog.setEmployee(emp);
     if (dialog.exec() == QDialog::Accepted) {
         emp = dialog.getEmployee();

@@ -2,15 +2,18 @@
 
 Team::Team()
     : m_id(-1), m_name(""), m_uniformType("Standard"),
-      m_minStaff(4), m_targetStaff(5), m_maxStaff(7), m_tableCount(4)
+      m_minStaff(4), m_targetStaff(5), m_maxStaff(7), m_tableCount(4),
+      m_teamType("Standard")
 {
 }
 
 Team::Team(int id, const QString& name, const QString& uniformType,
-           int targetStaff, int minStaff, int maxStaff)
+           int targetStaff, int minStaff, int maxStaff,
+           const QString& teamType)
     : m_id(id), m_name(name), m_uniformType(uniformType),
       m_minStaff(minStaff), m_targetStaff(targetStaff), m_maxStaff(maxStaff),
-      m_tableCount(4)
+      m_tableCount(4),
+      m_teamType(teamType.isEmpty() ? "Standard" : teamType)
 {
 }
 
@@ -21,6 +24,22 @@ int Team::getMinStaff() const { return m_minStaff; }
 int Team::getTargetStaff() const { return m_targetStaff; }
 int Team::getMaxStaff() const { return m_maxStaff; }
 int Team::getTableCount() const { return m_tableCount; }
+QString Team::getTeamType() const { return m_teamType; }
+
+bool Team::isGameShowTeam() const
+{
+    QString t = m_teamType.trimmed().toLower();
+    return (t.contains("game show") || t.contains("host"));
+}
+
+bool Team::acceptsEmployee(const Employee& emp) const
+{
+    if (isGameShowTeam()) {
+        return emp.canHostGameShow();
+    } else {
+        return emp.canDeal();
+    }
+}
 
 QStringList Team::getAssignedTables() const
 {
@@ -37,6 +56,7 @@ void Team::setUniformType(const QString& uniformType) { m_uniformType = uniformT
 void Team::setMinStaff(int minStaff) { m_minStaff = minStaff; }
 void Team::setTargetStaff(int targetStaff) { m_targetStaff = targetStaff; }
 void Team::setMaxStaff(int maxStaff) { m_maxStaff = maxStaff; }
+void Team::setTeamType(const QString& teamType) { m_teamType = teamType; }
 
 Team::StaffingStatus Team::evaluateStaffing(int currentStaffCount) const
 {

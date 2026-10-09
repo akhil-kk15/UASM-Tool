@@ -19,11 +19,25 @@ Employee EmployeeDialog::getEmployee() const
     return m_employee;
 }
 
+void EmployeeDialog::setTeamList(const QStringList& teams)
+{
+    QString current = ui->teamCombo->currentText();
+    ui->teamCombo->clear();
+    for (const QString& t : teams) {
+        if (!t.trimmed().isEmpty()) {
+            ui->teamCombo->addItem(t.trimmed());
+        }
+    }
+    if (!current.isEmpty()) {
+        ui->teamCombo->setCurrentText(current);
+    }
+}
+
 void EmployeeDialog::setEmployee(const Employee& employee)
 {
     m_employee = employee;
     ui->nameEdit->setText(employee.getName());
-    ui->departmentEdit->setText(employee.getDepartment());
+    ui->teamCombo->setCurrentText(employee.getTeam());
     ui->designationEdit->setText(employee.getDesignation());
     ui->emailEdit->setText(employee.getEmail());
     ui->phoneEdit->setText(employee.getPhone());
@@ -34,12 +48,21 @@ void EmployeeDialog::setEmployee(const Employee& employee)
     } else {
         ui->uniformSizeCombo->setCurrentText(employee.getUniformSize().isEmpty() ? "M" : employee.getUniformSize());
     }
+
+    QString role = employee.getRoleType();
+    int roleIndex = ui->roleCombo->findText(role);
+    if (roleIndex >= 0) {
+        ui->roleCombo->setCurrentIndex(roleIndex);
+    } else {
+        ui->roleCombo->setCurrentText(role.isEmpty() ? "Dealer" : role);
+    }
 }
 
 void EmployeeDialog::on_okBtn_clicked()
 {
     m_employee.setName(ui->nameEdit->text().trimmed());
-    m_employee.setDepartment(ui->departmentEdit->text().trimmed());
+    m_employee.setTeam(ui->teamCombo->currentText().trimmed());
+    m_employee.setRoleType(ui->roleCombo->currentText());
     m_employee.setDesignation(ui->designationEdit->text().trimmed());
     m_employee.setEmail(ui->emailEdit->text().trimmed());
     m_employee.setPhone(ui->phoneEdit->text().trimmed());
