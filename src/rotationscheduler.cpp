@@ -1,5 +1,6 @@
 #include "rotationscheduler.h"
 #include "databasemanager.h"
+#include <QVector>
 #include <QDebug>
 
 RotationScheduler::RotationScheduler(DatabaseManager* dbManager)

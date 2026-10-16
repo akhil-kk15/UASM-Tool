@@ -25,36 +25,51 @@ A Qt6 / C++ desktop application designed to manage employee uniforms, extra offi
 
 ## Prerequisites
 
-- **Compiler**: C++17 compliant compiler (GCC 9+ or Clang 10+)
+- **Compiler**: C++17 compliant compiler (MSVC 2019/2022, MinGW-w64 GCC 9+, GCC 9+, or Clang 10+)
 - **Build System**: CMake 3.16 or higher
-- **Framework**: Qt 6 (or Qt 5.15) with `Widgets` and `Sql` modules
+- **Framework**: Qt 6 (or Qt 5.15) with `Widgets` and `Sql` modules (including the `qsqlite` SQLite driver plugin)
 - **Database**: SQLite3
 
 ---
 
 ## How to Compile
 
-### 1. Configure with CMake
-
-From the repository root directory:
+### Linux / macOS
 
 ```bash
 cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
-```
-
-If Qt is installed in a custom location, specify the prefix path:
-
-```bash
-cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/path/to/Qt/6.x.x/gcc_64
-```
-
-### 2. Build the Application and Tests
-
-```bash
 cmake --build build -j$(nproc)
 ```
 
-This compiles the main application executable `AIDS` and the test binary `test_rotation_uniform`.
+If Qt is installed in a custom directory, pass `-DCMAKE_PREFIX_PATH`:
+
+```bash
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/path/to/Qt/6.x.x/gcc_64
+cmake --build build -j$(nproc)
+```
+
+### Windows (MSVC / Visual Studio)
+
+Open a **Developer PowerShell for VS** (or standard PowerShell with CMake installed) from the repository root:
+
+```powershell
+cmake -B build -S . -DCMAKE_PREFIX_PATH="C:/Qt/6.x.x/msvc2019_64"
+cmake --build build --config Release
+```
+
+To package the required Qt DLLs and the SQLite driver (`qsqlite.dll`) into the executable directory on Windows, run `windeployqt`:
+
+```powershell
+C:/Qt/6.x.x/msvc2019_64/bin/windeployqt.exe build/Release/AIDS.exe
+```
+
+### Windows (MinGW)
+
+```powershell
+cmake -B build -S . -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="C:/Qt/6.x.x/mingw_64"
+cmake --build build
+C:/Qt/6.x.x/mingw_64/bin/windeployqt.exe build/AIDS.exe
+```
 
 ---
 
@@ -62,27 +77,39 @@ This compiles the main application executable `AIDS` and the test binary `test_r
 
 ### Run Main GUI Application
 
-```bash
-./build/AIDS
-```
+- **Linux / macOS**:
+  ```bash
+  ./build/AIDS
+  ```
+- **Windows (MSVC)**:
+  ```powershell
+  .\build\Release\AIDS.exe
+  ```
+- **Windows (MinGW)**:
+  ```powershell
+  .\build\AIDS.exe
+  ```
 
 ### Run Automated Tests
 
-Using CTest:
+- **Linux / macOS**:
+  ```bash
+  ctest --test-dir build --output-on-failure
+  ```
+- **Windows (MSVC)**:
+  ```powershell
+  ctest --test-dir build -C Release --output-on-failure
+  ```
+- **Windows (MinGW)**:
+  ```powershell
+  ctest --test-dir build --output-on-failure
+  ```
 
-```bash
-ctest --test-dir build --output-on-failure
-```
-
-Or run the test binary directly:
-
-```bash
-./build/test_rotation_uniform
-```
+---
 
 ## Database Setup & Sample Data
 
-A pre-populated sample database `uniformmanagement.db` is included directly in the repository root containing:
+A pre-populated sample database `uniformmanagement.db` is included directly in the repository root and is automatically staged into the target executable directory during the CMake build. It contains:
 - 5 Teams: 4 Standard Dealer teams and 1 dedicated Game Show Host team (`Studio Live`).
 - 24 Employees: configured with `Dealer`, `Game Show Host`, and `Both` role types.
 - Complete Uniform Inventory: across sizes (`S`, `M`, `L`, `XL`), colors, and teams (including intentional out-of-stock scenarios to demonstrate uniform-checked fallback redirection).
@@ -90,14 +117,25 @@ A pre-populated sample database `uniformmanagement.db` is included directly in t
 
 ### How to Populate or Reset the Database
 
-To initialize or reset the database from scratch at any time using the seed SQL script:
+**Linux / macOS**:
 
 ```bash
-# 1. Populate the SQLite database in the project root
 sqlite3 uniformmanagement.db < seed_test_data.sql
-
-# 2. Copy to the build directory so the application binary accesses the updated database
 cp uniformmanagement.db build/uniformmanagement.db
+```
+
+**Windows (PowerShell)**:
+
+```powershell
+Get-Content seed_test_data.sql | sqlite3.exe uniformmanagement.db
+Copy-Item uniformmanagement.db -Destination build\Release\uniformmanagement.db -Force
+```
+
+**Windows (Command Prompt / CMD)**:
+
+```cmd
+sqlite3.exe uniformmanagement.db < seed_test_data.sql
+copy /Y uniformmanagement.db build\Release\uniformmanagement.db
 ```
 
 ### How to Verify Database Records

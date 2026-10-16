@@ -11,6 +11,10 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(MSVC)
+    add_compile_options(/utf-8 /W3)
+endif()
+
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Sql)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql)
 
@@ -84,6 +88,18 @@ install(TARGETS AIDS
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/uniformmanagement.db")
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/uniformmanagement.db"
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+    add_custom_command(TARGET AIDS POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/uniformmanagement.db"
+            "$<TARGET_FILE_DIR:AIDS>/uniformmanagement.db"
+        COMMENT "Staging sample uniformmanagement.db to executable directory"
+    )
+endif()
 
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(AIDS)

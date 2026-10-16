@@ -3,6 +3,10 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QSqlRecord>
+#include <QCoreApplication>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QDate>
 #include <QDebug>
 
@@ -17,8 +21,44 @@ DatabaseManager::~DatabaseManager()
 
 bool DatabaseManager::initializeDatabase(const QString& dbPath)
 {
-    m_database = QSqlDatabase::addDatabase("QSQLITE");
-    m_database.setDatabaseName(dbPath.isEmpty() ? "uniformmanagement.db" : dbPath);
+    QString resolvedPath = dbPath.isEmpty() ? QStringLiteral("uniformmanagement.db") : dbPath;
+
+    if (resolvedPath == QStringLiteral("uniformmanagement.db") && !QFileInfo::exists(resolvedPath)) {
+        const QString appDir = QCoreApplication::applicationDirPath();
+        const QStringList candidatePaths = {
+            QDir(appDir).filePath(QStringLiteral("uniformmanagement.db")),
+            QDir(appDir).filePath(QStringLiteral("../uniformmanagement.db")),
+            QDir(appDir).filePath(QStringLiteral("../../uniformmanagement.db")),
+            QDir::current().filePath(QStringLiteral("../uniformmanagement.db")),
+            QDir::current().filePath(QStringLiteral("../../uniformmanagement.db"))
+        };
+
+        for (const QString& candidate : candidatePaths) {
+            QFileInfo info(candidate);
+            if (info.exists() && info.isFile()) {
+                const QString targetInAppDir = QDir(appDir).filePath(QStringLiteral("uniformmanagement.db"));
+                if (!appDir.isEmpty() && QFileInfo(info.canonicalFilePath()) != QFileInfo(targetInAppDir)) {
+                    QFile::copy(info.canonicalFilePath(), targetInAppDir);
+                }
+                if (QFileInfo::exists(targetInAppDir)) {
+                    resolvedPath = targetInAppDir;
+                } else {
+                    resolvedPath = info.canonicalFilePath();
+                }
+                break;
+            }
+        }
+    }
+
+    if (QSqlDatabase::contains(QSqlDatabase::defaultConnection)) {
+        m_database = QSqlDatabase::database(QSqlDatabase::defaultConnection, false);
+        if (m_database.isOpen()) {
+            m_database.close();
+        }
+    } else {
+        m_database = QSqlDatabase::addDatabase("QSQLITE");
+    }
+    m_database.setDatabaseName(resolvedPath);
 
     if (!m_database.open()) {
         m_lastError = "Failed to open database: " + m_database.lastError().text();
