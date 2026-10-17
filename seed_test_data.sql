@@ -1,4 +1,4 @@
--- Seed script for AIDS (Uniform & Shift Management System)
+-- Seed script for UASM-Tool (Utilities and Schedule Management Tool)
 
 -- Recreate clean tables
 DROP TABLE IF EXISTS uniform_issues;

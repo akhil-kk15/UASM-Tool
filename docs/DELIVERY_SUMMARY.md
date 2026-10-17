@@ -1,8 +1,8 @@
-# Project Delivery Summary - AIDS
+# Project Delivery Summary - UASM-Tool
 
 ## What Has Been Delivered
 
-Your **AIDS** is now fully designed and ready to use with Qt Creator. Here's what has been created:
+Your **UASM-Tool (Utilities and Schedule Management Tool)** is now fully designed and ready to use with Qt Creator. Here's what has been created:
 
 ## Complete Project Structure
 
@@ -39,7 +39,7 @@ Your **AIDS** is now fully designed and ready to use with Qt Creator. Here's wha
 - **3 tables**: employees, uniforms, uniform_issues
 - **Relationships**: Proper foreign keys and constraints
 
-## 📚 Documentation
+## Documentation
 
 ### README.md
 Comprehensive guide including:
@@ -94,7 +94,7 @@ Detailed technical documentation with:
 - Permanent data storage
 - Error handling and validation
 
-## 🎨 Qt Creator Integration
+## Qt Creator Integration
 
 **This project is fully compatible with Qt Creator for visual design!**
 
@@ -120,7 +120,7 @@ Detailed technical documentation with:
 
 ### 1. Open in Qt Creator
 ```bash
-cd /home/akhilkk/Projects/AIDS/untitled1
+cd UASM-Tool
 qtcreator CMakeLists.txt &
 ```
 

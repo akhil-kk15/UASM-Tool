@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(AIDS VERSION 1.0.0 LANGUAGES CXX)
+project(UASM-Tool VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -50,31 +50,31 @@ set(PROJECT_SOURCES
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(AIDS
+    qt_add_executable(UASM-Tool
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
     )
 else()
     if(ANDROID)
-        add_library(AIDS SHARED
+        add_library(UASM-Tool SHARED
             ${PROJECT_SOURCES}
         )
     else()
-        add_executable(AIDS
+        add_executable(UASM-Tool
             ${PROJECT_SOURCES}
         )
     endif()
 endif()
 
-target_link_libraries(AIDS PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Sql)
+target_link_libraries(UASM-Tool PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Sql)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
 # explicit, fixed bundle identifier manually though.
 if(${QT_VERSION} VERSION_LESS 6.1.0)
-  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.uniformmanagement)
+  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.uasmtool)
 endif()
-set_target_properties(AIDS PROPERTIES
+set_target_properties(UASM-Tool PROPERTIES
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -83,7 +83,7 @@ set_target_properties(AIDS PROPERTIES
 )
 
 include(GNUInstallDirs)
-install(TARGETS AIDS
+install(TARGETS UASM-Tool
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -93,16 +93,16 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/uniformmanagement.db")
     install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/uniformmanagement.db"
         DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
-    add_custom_command(TARGET AIDS POST_BUILD
+    add_custom_command(TARGET UASM-Tool POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_CURRENT_SOURCE_DIR}/uniformmanagement.db"
-            "$<TARGET_FILE_DIR:AIDS>/uniformmanagement.db"
+            "$<TARGET_FILE_DIR:UASM-Tool>/uniformmanagement.db"
         COMMENT "Staging sample uniformmanagement.db to executable directory"
     )
 endif()
 
 if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(AIDS)
+    qt_finalize_executable(UASM-Tool)
 endif()
 
 add_executable(test_rotation_uniform

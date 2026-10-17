@@ -15,7 +15,7 @@ SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SOURCES))
 
 # Target executable
-TARGET = $(BUILD_DIR)/inventory_system
+TARGET = $(BUILD_DIR)/UASM-Tool
 
 # Default target
 all: $(TARGET)

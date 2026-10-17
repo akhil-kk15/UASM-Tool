@@ -1,10 +1,10 @@
-# Quick Reference Guide - AIDS
+# Quick Reference Guide - UASM-Tool
 
 ## Getting Started in 5 Minutes
 
 ### 1. Open the Project
 ```bash
-cd /home/akhilkk/Projects/AIDS/untitled1
+cd UASM-Tool
 qtcreator CMakeLists.txt &
 ```
 
@@ -178,7 +178,7 @@ qtcreator CMakeLists.txt &
 
 ```bash
 # Navigate to project
-cd /home/akhilkk/Projects/AIDS/untitled1
+cd UASM-Tool
 
 # Create build folder
 mkdir -p build && cd build
@@ -190,7 +190,7 @@ cmake -DCMAKE_PREFIX_PATH=/opt/Qt/6.x.x/gcc_64 ..
 make -j$(nproc)
 
 # Run
-./AIDS
+./UASM-Tool
 ```
 
 ## Troubleshooting Quick Fixes
@@ -260,7 +260,7 @@ For extended functionality:
 
 ## Version Information
 
-- **Project**: AIDS v1.0.0
+- **Project**: UASM-Tool v1.0.0
 - **Qt Support**: Qt 5.15 and Qt 6.x
 - **C++ Standard**: C++17
 - **Database**: SQLite 3

@@ -2,7 +2,7 @@ QT += core gui sql
 
 CONFIG += c++17
 
-TARGET = AIDS
+TARGET = UASM-Tool
 TEMPLATE = app
 
 # Include paths
@@ -19,7 +19,10 @@ SOURCES += \
     src/databasemanager.cpp \
     src/employeedialog.cpp \
     src/uniformdialog.cpp \
-    src/issuedialog.cpp
+    src/issuedialog.cpp \
+    src/team.cpp \
+    src/rotationscheduler.cpp \
+    src/reassigndialog.cpp
 
 # Header files
 HEADERS += \
@@ -30,14 +33,18 @@ HEADERS += \
     src/databasemanager.h \
     src/employeedialog.h \
     src/uniformdialog.h \
-    src/issuedialog.h
+    src/issuedialog.h \
+    src/team.h \
+    src/rotationscheduler.h \
+    src/reassigndialog.h
 
 # UI files
 FORMS += \
     ui/mainwindow.ui \
     ui/employeededialog.ui \
     ui/uniformdialog.ui \
-    ui/issuedialog.ui
+    ui/issuedialog.ui \
+    ui/reassigndialog.ui
 
 # Default rules for deployment
 qnx: target.path = /tmp/$${TARGET}/bin

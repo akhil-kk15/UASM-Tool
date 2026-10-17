@@ -1,4 +1,4 @@
-# AIDS - Uniform & Shift Management System
+# UASM-Tool - Utilities and Schedule Management Tool
 
 A Qt6 / C++ desktop application designed to manage employee uniforms, extra office inventory, team staffing, and 8-hour shift table rotations with cyclical breaks.
 
@@ -60,7 +60,7 @@ cmake --build build --config Release
 To package the required Qt DLLs and the SQLite driver (`qsqlite.dll`) into the executable directory on Windows, run `windeployqt`:
 
 ```powershell
-C:/Qt/6.x.x/msvc2019_64/bin/windeployqt.exe build/Release/AIDS.exe
+C:/Qt/6.x.x/msvc2019_64/bin/windeployqt.exe build/Release/UASM-Tool.exe
 ```
 
 ### Windows (MinGW)
@@ -68,7 +68,7 @@ C:/Qt/6.x.x/msvc2019_64/bin/windeployqt.exe build/Release/AIDS.exe
 ```powershell
 cmake -B build -S . -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="C:/Qt/6.x.x/mingw_64"
 cmake --build build
-C:/Qt/6.x.x/mingw_64/bin/windeployqt.exe build/AIDS.exe
+C:/Qt/6.x.x/mingw_64/bin/windeployqt.exe build/UASM-Tool.exe
 ```
 
 ---
@@ -79,15 +79,15 @@ C:/Qt/6.x.x/mingw_64/bin/windeployqt.exe build/AIDS.exe
 
 - **Linux / macOS**:
   ```bash
-  ./build/AIDS
+  ./build/UASM-Tool
   ```
 - **Windows (MSVC)**:
   ```powershell
-  .\build\Release\AIDS.exe
+  .\build\Release\UASM-Tool.exe
   ```
 - **Windows (MinGW)**:
   ```powershell
-  .\build\AIDS.exe
+  .\build\UASM-Tool.exe
   ```
 
 ### Run Automated Tests

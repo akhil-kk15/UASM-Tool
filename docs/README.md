@@ -1,4 +1,4 @@
-# AIDS - Uniform & Shift Management System
+# UASM-Tool - Utilities and Schedule Management Tool
 
 A Qt6 / C++ desktop application designed to manage employee uniforms, extra office uniform inventory, team staffing, and 8-hour shift table rotation schedules with cyclical breaks.
 
@@ -54,7 +54,7 @@ cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/opt/Qt/6.8.0
 cmake --build build -j$(nproc)
 ```
 
-This compiles both the main application executable `AIDS` and the verification test suite `test_rotation_uniform`.
+This compiles both the main application executable `UASM-Tool` and the verification test suite `test_rotation_uniform`.
 
 ---
 
@@ -63,7 +63,7 @@ This compiles both the main application executable `AIDS` and the verification t
 ### Run Main GUI Application
 
 ```bash
-./build/AIDS
+./build/UASM-Tool
 ```
 
 ### Run Automated Tests

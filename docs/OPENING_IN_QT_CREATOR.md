@@ -2,15 +2,15 @@
 
 ## Now That You Have the .pro File
 
-The new `AIDS.pro` file allows Qt Creator to recognize this as a native Qt project.
+The `UASM-Tool.pro` file allows Qt Creator to recognize this as a native Qt project.
 
 ## How to Open in Qt Creator (Updated)
 
 ### Method 1: Using the .pro File (Recommended)
 1. Open Qt Creator
 2. **File → Open File or Project**
-3. Navigate to `/home/akhilkk/Projects/AIDS/untitled1`
-4. Select **`AIDS.pro`** (the new file)
+3. Navigate to the `UASM-Tool` project directory
+4. Select **`UASM-Tool.pro`**
 5. Click **Open**
 6. Qt Creator will ask which kit to use - **select your desktop kit**
 7. Click **Configure Project**
@@ -23,7 +23,7 @@ Still works! You can also use:
 ## What Changed
 
 ### New File Added
-- **`AIDS.pro`** - Qt project file (qmake format)
+- **`UASM-Tool.pro`** - Qt project file (qmake format)
   - Lists all source files
   - Lists all header files
   - Lists all UI files
@@ -54,7 +54,7 @@ Good for version control
 
 ### Quick Steps
 1. **File → Open File or Project**
-2. **Select**: `UniformManagementSystem.pro` 
+2. **Select**: `UASM-Tool.pro` 
 3. **Click Open**
 4. **Configure with your kit**
 5. **Build**: Ctrl + B
@@ -108,10 +108,10 @@ In Qt Creator:
 
 ### Using terminal (if needed)
 ```bash
-cd /home/akhilkk/Projects/AIDS/untitled1
-qmake UniformManagementSystem.pro
+cd UASM-Tool
+qmake UASM-Tool.pro
 make
-./UniformManagementSystem
+./UASM-Tool
 ```
 
 ## Editing in Qt Designer
@@ -128,7 +128,7 @@ Once opened with .pro file:
 
 | File | Purpose |
 |------|---------|
-| `UniformManagementSystem.pro` | Qt project file (NEW) |
+| `UASM-Tool.pro` | Qt project file |
 | `CMakeLists.txt` | CMake build file (alternative) |
 | `mainwindow.ui` | Main window design |
 | `*dialog.ui` | Dialog designs |
@@ -161,8 +161,8 @@ Try this complete reset:
 5. Configure with kit
 6. Build and run
 
-The `.pro` file I created includes all necessary files and configurations for Qt Creator to recognize and run your project properly.
+The `.pro` file includes all necessary files and configurations for Qt Creator to recognize and run your project properly.
 
 ---
 
-**Try opening `UniformManagementSystem.pro` now - your project should be fully recognized!**
+**Try opening `UASM-Tool.pro` now - your project should be fully recognized!**

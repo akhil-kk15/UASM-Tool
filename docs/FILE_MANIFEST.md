@@ -1,4 +1,4 @@
-# Project File Manifest - AIDS
+# Project File Manifest - UASM-Tool
 
 ## Complete File Listing
 
