@@ -1,0 +1,143 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "windows-msvc",
+      "displayName": "Windows - Visual Studio 2022 (MSVC x64)",
+      "description": "Multi-config Visual Studio build. Requires the MSVC build of Qt (for example D:/Qt/6.10.0/msvc2022_64); Qt is auto-detected. See README.md.",
+      "generator": "Visual Studio 17 2022",
+      "architecture": {
+        "value": "x64",
+        "strategy": "set"
+      },
+      "binaryDir": "${sourceDir}/build/windows-msvc",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "windows-mingw",
+      "displayName": "Windows - MinGW (Qt Tools + Ninja)",
+      "description": "Fallback that works with the MinGW kit shipped by the Qt online installer. Paths are pinned to the standard Qt Tools layout; adjust them if your install differs (see README.md).",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/windows-mingw",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "D:/Qt/Tools/mingw1310_64/bin/g++.exe",
+        "CMAKE_MAKE_PROGRAM": "D:/Qt/Tools/Ninja/ninja.exe"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Linux - GCC Debug",
+      "description": "Ninja/Make build on Linux. Qt is auto-detected from ~/Qt, /opt/Qt or the system packages.",
+      "binaryDir": "${sourceDir}/build/linux-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Linux - GCC Release",
+      "binaryDir": "${sourceDir}/build/linux-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-msvc-debug",
+      "displayName": "Windows MSVC - Debug",
+      "configurePreset": "windows-msvc",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-msvc-release",
+      "displayName": "Windows MSVC - Release",
+      "configurePreset": "windows-msvc",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-mingw",
+      "displayName": "Windows MinGW - Debug",
+      "configurePreset": "windows-mingw"
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Linux - Debug",
+      "configurePreset": "linux-debug"
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Linux - Release",
+      "configurePreset": "linux-release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "windows-msvc-debug",
+      "displayName": "Windows MSVC - Debug tests",
+      "configurePreset": "windows-msvc",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "windows-msvc-release",
+      "displayName": "Windows MSVC - Release tests",
+      "configurePreset": "windows-msvc",
+      "configuration": "Release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "windows-mingw",
+      "displayName": "Windows MinGW - Debug tests",
+      "configurePreset": "windows-mingw",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Linux - Debug tests",
+      "configurePreset": "linux-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Linux - Release tests",
+      "configurePreset": "linux-release",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

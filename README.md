@@ -34,6 +34,43 @@ A Qt6 / C++ desktop application designed to manage employee uniforms, extra offi
 
 ## How to Compile
 
+A `CMakePresets.json` is included, so Visual Studio (Windows) and VS Code / Qt Creator (Linux) can configure the project with the right settings and no manual Qt paths (requires CMake 3.21+; recent VS 2022 releases bundle a newer CMake). Qt is auto-detected from the standard install locations - `C:/Qt`, `D:/Qt`, `%USERPROFILE%/Qt` on Windows; `~/Qt` and `/opt/Qt` on Linux - or from the `QTDIR` environment variable. An explicit `-DCMAKE_PREFIX_PATH=...` always wins.
+
+### Visual Studio 2022 (Windows)
+
+1. **File → Open → Folder...** and select the repository root.
+2. If Visual Studio asks which configuration source to use, choose **CMakePresets.json**, then select the **`windows-msvc`** preset.
+3. Build with **Ctrl+Shift+B**, run/debug with **F5**.
+
+The debugger environment and working directory are configured automatically, and after the first build the required Qt DLLs and plugins are deployed next to the executable, so the app also starts from Explorer or any terminal - no manual `windeployqt` step. (Disable the automatic deployment with `-DUASM_DEPLOY_QT=OFF` if you prefer to manage the runtime yourself.)
+
+> **Important - use the MSVC build of Qt.** Visual Studio compiles with MSVC, which cannot link against a MinGW Qt. If your Qt installation only has the MinGW kit (for example `D:\Qt\6.10.0\mingw_64`), add the MSVC kit once with the **Qt Maintenance Tool**: *6.10.0 → MSVC 2022 64-bit*. Then re-configure and Qt is found automatically. If Qt is installed somewhere unusual, set a `QTDIR` environment variable (for example `D:\Qt\6.10.0\msvc2022_64`).
+
+### VS Code (Linux)
+
+The CMake Tools extension reads the same `CMakePresets.json`: select the **`linux-debug`** preset, or from a terminal:
+
+```bash
+cmake --preset linux-debug
+cmake --build --preset linux-debug
+ctest --preset linux-debug
+```
+
+### Windows (MinGW) - works with the MinGW kit that ships with the Qt installer
+
+The **`windows-mingw`** preset builds with Qt's bundled MinGW and Ninja (paths pinned to the standard `D:\Qt` layout in `CMakePresets.json`; adjust them if your install differs):
+
+```powershell
+cmake --preset windows-mingw
+cmake --build --preset windows-mingw
+ctest --preset windows-mingw
+.\build\windows-mingw\UASM-Tool.exe
+```
+
+The Qt and MinGW runtime DLLs are deployed next to the executable automatically on Windows, so no PATH setup is needed to run the tests or the application.
+
+The command-line recipes below work as well; the presets are simply the shortest path.
+
 ### Linux / macOS
 
 ```bash
@@ -57,7 +94,7 @@ cmake -B build -S . -DCMAKE_PREFIX_PATH="C:/Qt/6.x.x/msvc2019_64"
 cmake --build build --config Release
 ```
 
-To package the required Qt DLLs and the SQLite driver (`qsqlite.dll`) into the executable directory on Windows, run `windeployqt`:
+The required Qt DLLs, plugins (including the SQLite driver `qsqlite.dll`) and the compiler runtime are deployed next to the executable automatically after building, so no `windeployqt` call is needed. To run it manually anyway:
 
 ```powershell
 C:/Qt/6.x.x/msvc2019_64/bin/windeployqt.exe build/Release/UASM-Tool.exe
@@ -68,8 +105,9 @@ C:/Qt/6.x.x/msvc2019_64/bin/windeployqt.exe build/Release/UASM-Tool.exe
 ```powershell
 cmake -B build -S . -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="C:/Qt/6.x.x/mingw_64"
 cmake --build build
-C:/Qt/6.x.x/mingw_64/bin/windeployqt.exe build/UASM-Tool.exe
 ```
+
+The Qt runtime and the MinGW runtime DLLs are deployed automatically after building (manual fallback: `C:/Qt/6.x.x/mingw_64/bin/windeployqt.exe --release build/UASM-Tool.exe`).
 
 ---
 
@@ -109,7 +147,7 @@ C:/Qt/6.x.x/mingw_64/bin/windeployqt.exe build/UASM-Tool.exe
 
 ## Database Setup & Sample Data
 
-A pre-populated sample database `uniformmanagement.db` is included directly in the repository root and is automatically staged into the target executable directory during the CMake build. It contains:
+A pre-populated sample database `uniformmanagement.db` is included directly in the repository root and is staged into the target executable directory the first time you build (the CMake build copies it only when missing, so rebuilding never overwrites data the application has written; delete the copy next to the executable to re-stage the pristine sample). It contains:
 - 5 Teams: 4 Standard Dealer teams and 1 dedicated Game Show Host team (`Studio Live`).
 - 24 Employees: configured with `Dealer`, `Game Show Host`, and `Both` role types.
 - Complete Uniform Inventory: across sizes (`S`, `M`, `L`, `XL`), colors, and teams (including intentional out-of-stock scenarios to demonstrate uniform-checked fallback redirection).

@@ -1,3 +1,8 @@
+// Keep assertions active in every build type: Release/RelWithDebInfo define
+// NDEBUG, which would otherwise silently disable every check below.
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <cassert>
 #include <iostream>
 #include <QCoreApplication>

@@ -1,67 +1,45 @@
-# Compiler and flags
-CXX = g++
-CXXFLAGS = -std=c++11 -Wall -Wextra -I./include
-DEBUGFLAGS = -g
-RELEASEFLAGS = -O2
+# Convenience wrapper around the CMake build.
+#
+# This Makefile only forwards to CMake, so Linux/macOS terminals (and MSYS/MinGW
+# make on Windows) all build identically. Visual Studio and VS Code use
+# CMakePresets.json instead - see README.md.
+#
+#   make            configure + build (Release)
+#   make test       build + run the automated tests
+#   make run        build + launch the application
+#   make clean      remove the build directory
+#   make CONFIG=Debug   pick a different build type
 
-# Directories
-SRC_DIR = src
-INCLUDE_DIR = include
-BUILD_DIR = build
-OBJ_DIR = $(BUILD_DIR)/obj
+CMAKE     ?= cmake
+BUILD_DIR ?= build
+CONFIG    ?= Release
 
-# Source files
-SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
-OBJECTS = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SOURCES))
+.PHONY: all configure build test run clean rebuild help
 
-# Target executable
-TARGET = $(BUILD_DIR)/UASM-Tool
+all: build
 
-# Default target
-all: $(TARGET)
+configure:
+	$(CMAKE) -B $(BUILD_DIR) -S . -DCMAKE_BUILD_TYPE=$(CONFIG)
 
-# Create directories if they don't exist
-$(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
+build: configure
+	$(CMAKE) --build $(BUILD_DIR)
 
-# Link object files to create executable
-$(TARGET): $(OBJECTS) | $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $(TARGET)
-	@echo "Build complete! Executable: $(TARGET)"
+test: build
+	$(CMAKE) -E chdir $(BUILD_DIR) ctest --output-on-failure
 
-# Compile source files to object files
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+run: build
+	./$(BUILD_DIR)/UASM-Tool
 
-# Debug build
-debug: CXXFLAGS += $(DEBUGFLAGS)
-debug: clean all
-
-# Release build
-release: CXXFLAGS += $(RELEASEFLAGS)
-release: clean all
-
-# Run the program
-run: $(TARGET)
-	./$(TARGET)
-
-# Clean build artifacts
 clean:
-	rm -rf $(BUILD_DIR)
-	@echo "Clean complete!"
+	$(CMAKE) -E rm -rf $(BUILD_DIR)
 
-# Clean and rebuild
-rebuild: clean all
+rebuild: clean build
 
-# Display help
 help:
 	@echo "Available targets:"
-	@echo "  all      - Build the project (default)"
-	@echo "  debug    - Build with debug symbols"
-	@echo "  release  - Build with optimizations"
-	@echo "  run      - Build and run the program"
-	@echo "  clean    - Remove build artifacts"
-	@echo "  rebuild  - Clean and rebuild"
-	@echo "  help     - Display this help message"
-
-.PHONY: all debug release run clean rebuild help
+	@echo "  all/build - Configure and build (default, CONFIG=$(CONFIG))"
+	@echo "  test      - Build and run the automated tests"
+	@echo "  run       - Build and launch the application"
+	@echo "  clean     - Remove the build directory"
+	@echo "  rebuild   - Clean and build again"
+	@echo "  help      - Display this help message"

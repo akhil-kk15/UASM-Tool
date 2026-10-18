@@ -33,9 +33,11 @@ bool DatabaseManager::initializeDatabase(const QString& dbPath)
             QDir::current().filePath(QStringLiteral("../../uniformmanagement.db"))
         };
 
+        bool foundExisting = false;
         for (const QString& candidate : candidatePaths) {
             QFileInfo info(candidate);
             if (info.exists() && info.isFile()) {
+                foundExisting = true;
                 const QString targetInAppDir = QDir(appDir).filePath(QStringLiteral("uniformmanagement.db"));
                 if (!appDir.isEmpty() && QFileInfo(info.canonicalFilePath()) != QFileInfo(targetInAppDir)) {
                     QFile::copy(info.canonicalFilePath(), targetInAppDir);
@@ -47,6 +49,14 @@ bool DatabaseManager::initializeDatabase(const QString& dbPath)
                 }
                 break;
             }
+        }
+
+        if (!foundExisting && !appDir.isEmpty()) {
+            // No sample database found anywhere: create a fresh one next to the
+            // executable so its location does not depend on the working
+            // directory (Visual Studio, VS Code, Qt Creator and the terminal
+            // all behave the same way on Windows and Linux).
+            resolvedPath = QDir(appDir).filePath(QStringLiteral("uniformmanagement.db"));
         }
     }
 

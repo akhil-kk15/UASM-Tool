@@ -7,9 +7,22 @@ build/
 # Ignore editor/IDE specific files
 .vscode/
 .idea/
+.vs/
+out/
 *.swp
 *.swo
 *~
+.cache/
+
+# Visual Studio CMake (CMakePresets.json is the shared configuration)
+CMakeSettings.json
+CMakeUserPresets.json
+
+# qmake artifacts (when building UASM-Tool.pro directly)
+ui_generated/
+moc_generated/
+obj/
+rcc_generated/
 
 # Ignore database and user files
 *.db
