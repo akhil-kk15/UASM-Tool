@@ -258,7 +258,7 @@ void MainWindow::displayRotationSchedule(const ShiftSchedule& schedule)
     ui->rotationTable->setRowCount(0);
     ui->rotationTable->setColumnCount(6);
     QStringList headers;
-    headers << "Time Slot" << "Table 1" << "Table 2" << "Table 3" << "Table 4" << "Table 5 (Break)";
+    headers << "Time Slot" << "Table 1" << "Table 2" << "Table 3" << "Table 4" << "Break";
     ui->rotationTable->setHorizontalHeaderLabels(headers);
 
     ui->rotationStatusLabel->setText(
