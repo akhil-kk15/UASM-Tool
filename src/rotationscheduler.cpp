@@ -13,6 +13,39 @@ void RotationScheduler::setDatabaseManager(DatabaseManager* dbManager)
     m_dbManager = dbManager;
 }
 
+int RotationScheduler::recommendSlotMinutes(const Team& team, int staffCount) const
+{
+    Q_UNUSED(team);
+    // Dire situation (critically understaffed: 4 or fewer staff for 4 tables) -> 20 minutes
+    if (staffCount <= 4) {
+        return 20;
+    }
+    // Understaffed (5 staff) or Overstaffed (> 7 staff) -> 40 minutes
+    if (staffCount == 5 || staffCount > MAX_SHIFT_STAFF) {
+        return 40;
+    }
+    // Standard optimal staffing (6 to 7 staff) -> 30 minutes
+    return 30;
+}
+
+int RotationScheduler::normalizeSlotMinutes(int requestedMinutes, const Team& team, int staffCount) const
+{
+    if (requestedMinutes <= 0) {
+        return recommendSlotMinutes(team, staffCount);
+    }
+    if (requestedMinutes == 20 || requestedMinutes == 30 || requestedMinutes == 40) {
+        return requestedMinutes;
+    }
+    // Strictly clamp any other value to {20, 30, 40}
+    if (requestedMinutes < 25) {
+        return 20;
+    }
+    if (requestedMinutes >= 35) {
+        return 40;
+    }
+    return 30;
+}
+
 ShiftSchedule RotationScheduler::generate8HourSchedule(const Team& team,
                                                        const QList<Employee>& members,
                                                        const QDate& date,
@@ -22,21 +55,23 @@ ShiftSchedule RotationScheduler::generate8HourSchedule(const Team& team,
 {
     ShiftSchedule schedule;
     schedule.teamName = team.getName();
+    schedule.tableGames = team.getTableGamesList();
     schedule.shiftDate = date;
     schedule.shiftStartTime = startTime;
     schedule.shiftDurationHours = 8;
-    schedule.slotMinutes = slotMinutes > 0 ? slotMinutes : 30;
+
+    int totalAssigned = members.size();
+    // Enforce the 8-hour shift limit of at most 7 employees per team
+    QList<Employee> shiftMembers = members.mid(0, MAX_SHIFT_STAFF);
+    int numEmployees = shiftMembers.size();
+
+    schedule.slotMinutes = normalizeSlotMinutes(slotMinutes, team, totalAssigned);
 
     // 16 tables per employee = 4 rounds of 4 tables (with Table 5 break) -> 5 slots per round x 4 rounds = 20 slots.
     if (numSlots <= 0) {
-        if (schedule.slotMinutes == 30 || schedule.slotMinutes == 40) {
-            numSlots = 20;
-        } else {
-            numSlots = 8;
-        }
+        numSlots = 20;
     }
 
-    int numEmployees = members.size();
     if (numEmployees == 0) {
         schedule.statusNotes = "No employees assigned to team. Cannot generate rotation.";
         return schedule;
@@ -46,20 +81,28 @@ ShiftSchedule RotationScheduler::generate8HourSchedule(const Team& team,
     const int tableCount = 4;
 
     if (numEmployees < tableCount) {
-        schedule.statusNotes = QString("CRITICALLY UNDERSTAFFED: Team has only %1 employee(s) for 4 tables. "
-                                       "Tables cannot all be staffed. Additional staff required from overstaffed teams.")
-                               .arg(numEmployees);
+        schedule.statusNotes = QString("DIRE UNDERSTAFFING (%1/7): Only %2 employee(s) for 4 tables. "
+                                       "Rotation adjusted to %3 Mins (Dire Mode). Additional staff required.")
+                               .arg(numEmployees).arg(numEmployees).arg(schedule.slotMinutes);
     } else if (numEmployees == tableCount) {
-        schedule.statusNotes = "UNDERSTAFFED: Exactly 4 employees for 4 tables. "
-                               "No relief staff available for breaks without taking tables offline. "
-                               "Recommended target: 5-6 employees.";
+        schedule.statusNotes = QString("DIRE UNDERSTAFFING (4/7): Exactly 4 employees for 4 tables (no break relief). "
+                                       "Rotation adjusted to %1 Mins (Dire Mode). Max 7 staff per shift.")
+                               .arg(schedule.slotMinutes);
+    } else if (totalAssigned > MAX_SHIFT_STAFF) {
+        schedule.statusNotes = QString("OVERSTAFFED (%1/7): Capped shift rotation at 7 staff (%2 Overflow should be placed in compatible teams). "
+                                       "Rotation Type: %3 Mins | Games: %4.")
+                               .arg(totalAssigned).arg(totalAssigned - MAX_SHIFT_STAFF)
+                               .arg(schedule.slotMinutes).arg(team.getUniqueGames().join(", "));
+    } else if (numEmployees == 5) {
+        schedule.statusNotes = QString("UNDERSTAFFED (5/7): 4 tables active + 1 on break. "
+                                       "Rotation Type: %1 Mins | Games: %2.")
+                               .arg(schedule.slotMinutes).arg(team.getUniqueGames().join(", "));
     } else {
-        schedule.statusNotes = QString("16 Tables per Employee: 4 rounds of 4 tables with Table 5 as break. Rotation Type: %1 Mins. Staffing: %2 employees.")
-                               .arg(schedule.slotMinutes).arg(numEmployees);
+        schedule.statusNotes = QString("OPTIMAL (%1/7 Max): 4 tables active + %2 on break. "
+                                       "Rotation Type: %3 Mins | Games: %4.")
+                               .arg(numEmployees).arg(numEmployees - tableCount)
+                               .arg(schedule.slotMinutes).arg(team.getUniqueGames().join(", "));
     }
-
-    // Consecutive tables attended counter for each employee index
-    QVector<int> consecutiveWorked(numEmployees, 0);
 
     for (int s = 0; s < numSlots; ++s) {
         RotationSlot slot;
@@ -68,10 +111,7 @@ ShiftSchedule RotationScheduler::generate8HourSchedule(const Team& team,
         slot.endTime = startTime.addSecs((s + 1) * schedule.slotMinutes * 60);
 
         if (numEmployees >= 5) {
-            // Elegant cyclical round-robin rotation:
-            // For N employees and 4 tables, in slot s:
-            // Break employee is offset by s % N (or multiple if N > 5)
-            // Each employee works 4 consecutive slots, then takes 1 slot break!
+            // Cyclical round-robin rotation for 5..7 employees across 4 tables:
             int breakOffset = s % numEmployees;
             int numBreaks = numEmployees - tableCount;
 
@@ -82,8 +122,8 @@ ShiftSchedule RotationScheduler::generate8HourSchedule(const Team& team,
 
             // Assign break employees
             for (int bIdx : breakIndices) {
-                slot.onBreakEmployeeIds.append(members[bIdx].getId());
-                slot.onBreakEmployeeNames.append(members[bIdx].getName());
+                slot.onBreakEmployeeIds.append(shiftMembers[bIdx].getId());
+                slot.onBreakEmployeeNames.append(shiftMembers[bIdx].getName());
             }
 
             // Assign remaining to the 4 tables
@@ -93,8 +133,9 @@ ShiftSchedule RotationScheduler::generate8HourSchedule(const Team& team,
                 if (!breakIndices.contains(empIdx)) {
                     TableAssignment assign;
                     assign.tableNumber = tableNum;
-                    assign.employeeId = members[empIdx].getId();
-                    assign.employeeName = members[empIdx].getName();
+                    assign.tableGame = schedule.tableGames.value(tableNum - 1, "Blackjack");
+                    assign.employeeId = shiftMembers[empIdx].getId();
+                    assign.employeeName = shiftMembers[empIdx].getName();
                     slot.tableAssignments.append(assign);
                     tableNum++;
                 }
@@ -105,11 +146,11 @@ ShiftSchedule RotationScheduler::generate8HourSchedule(const Team& team,
                 int empIdx = (s + t - 1) % numEmployees;
                 TableAssignment assign;
                 assign.tableNumber = t;
-                assign.employeeId = members[empIdx].getId();
-                assign.employeeName = members[empIdx].getName();
+                assign.tableGame = schedule.tableGames.value(t - 1, "Blackjack");
+                assign.employeeId = shiftMembers[empIdx].getId();
+                assign.employeeName = shiftMembers[empIdx].getName();
                 slot.tableAssignments.append(assign);
             }
-            // After every 4 slots, note that break is due
             if ((s + 1) % 4 == 0) {
                 slot.onBreakEmployeeNames.append("Relief Needed (All 4 staff reached 4 tables)");
             }
@@ -118,13 +159,15 @@ ShiftSchedule RotationScheduler::generate8HourSchedule(const Team& team,
             for (int i = 0; i < numEmployees; ++i) {
                 TableAssignment assign;
                 assign.tableNumber = i + 1;
-                assign.employeeId = members[i].getId();
-                assign.employeeName = members[i].getName();
+                assign.tableGame = schedule.tableGames.value(i, "Blackjack");
+                assign.employeeId = shiftMembers[i].getId();
+                assign.employeeName = shiftMembers[i].getName();
                 slot.tableAssignments.append(assign);
             }
             for (int unstaffed = numEmployees + 1; unstaffed <= tableCount; ++unstaffed) {
                 TableAssignment assign;
                 assign.tableNumber = unstaffed;
+                assign.tableGame = schedule.tableGames.value(unstaffed - 1, "Blackjack");
                 assign.employeeId = -1;
                 assign.employeeName = "[UNATTENDED - UNDERSTAFFED]";
                 slot.tableAssignments.append(assign);
@@ -141,6 +184,7 @@ ReassignmentResult RotationScheduler::reassignEmployee(int employeeId,
                                                       const QString& requestedTargetTeam,
                                                       const QString& reason)
 {
+    Q_UNUSED(reason);
     ReassignmentResult result;
     result.success = false;
     result.employeeId = employeeId;
@@ -173,8 +217,8 @@ ReassignmentResult RotationScheduler::reassignEmployee(int employeeId,
         return result;
     }
 
-    // Role compatibility check for requested target team
-    if (!targetTeam.acceptsEmployee(emp)) {
+    // 1. Role compatibility check for requested target team
+    if (!targetTeam.hasCompatibleRole(emp)) {
         if (targetTeam.isGameShowTeam()) {
             result.message = QString("Cannot reassign %1 (Role: '%2') to %3: This team is dedicated to Game Show Hosts.")
                              .arg(emp.getName(), emp.getRoleType(), requestedTargetTeam);
@@ -185,17 +229,28 @@ ReassignmentResult RotationScheduler::reassignEmployee(int employeeId,
         return result;
     }
 
-    // 1. Check if uniform in employee size is available for requested target team
+    // 2. Game Knowledge compatibility check for requested target team
+    if (!targetTeam.hasRequiredGameKnowledge(emp)) {
+        QStringList missing = targetTeam.getMissingGames(emp);
+        result.message = QString("Cannot reassign %1 (Game Knowledge: '%2') to %3 (Tables: %4): Missing required game knowledge for [%5].")
+                         .arg(emp.getName(), emp.getGameKnowledge(), requestedTargetTeam,
+                              targetTeam.getUniqueGames().join(", "), missing.join(", "));
+        return result;
+    }
+
+    // 3. Check if target team is within the 7-person shift limit AND has uniform in employee size
+    int currentTargetStaff = m_dbManager->getTeamMemberCount(targetTeam.getName());
+    int maxShiftCap = targetTeam.getMaxStaff() > 0 ? qMin(targetTeam.getMaxStaff(), MAX_SHIFT_STAFF) : MAX_SHIFT_STAFF;
+    bool targetUnderShiftCap = (currentTargetStaff < maxShiftCap);
+
     int availForRequested = m_dbManager->getAvailableUniformCountForTeam(
         targetTeam.getName(), targetTeam.getUniformType(), result.employeeSize);
 
-    if (availForRequested > 0) {
-        // Uniform is available! Reassign to requested team
+    if (targetUnderShiftCap && availForRequested > 0) {
         Uniform uni = m_dbManager->findAvailableUniformForTeam(
             targetTeam.getName(), targetTeam.getUniformType(), result.employeeSize);
 
         if (m_dbManager->updateEmployeeTeam(employeeId, requestedTargetTeam)) {
-            // Allocate uniform
             if (uni.getId() > 0) {
                 UniformIssue issue;
                 issue.setEmployeeId(employeeId);
@@ -206,7 +261,6 @@ ReassignmentResult RotationScheduler::reassignEmployee(int employeeId,
                 m_dbManager->issueUniform(issue);
             }
 
-            // Adjust rotations for both teams
             adjustTeamRotation(result.sourceTeam);
             adjustTeamRotation(requestedTargetTeam);
 
@@ -214,8 +268,11 @@ ReassignmentResult RotationScheduler::reassignEmployee(int employeeId,
             result.assignedTeam = requestedTargetTeam;
             result.requestedTeamHadUniform = true;
             result.fallbackUsed = false;
-            result.message = QString("Employee %1 successfully assigned to %2. Uniform issued (Type: %3, Size: %4). Team rotations adjusted.")
-                             .arg(result.employeeName, requestedTargetTeam, uni.getType(), result.employeeSize);
+            result.message = QString("[#%1] %2: %3 -> %4 (%5/%6 staff) | Uniform: %7 (Size %8) | Games: %9")
+                             .arg(employeeId)
+                             .arg(result.employeeName, result.sourceTeam, requestedTargetTeam)
+                             .arg(currentTargetStaff + 1).arg(maxShiftCap)
+                             .arg(uni.getType(), result.employeeSize, emp.getGameKnowledge());
             return result;
         } else {
             result.message = "Failed to update employee team in database: " + m_dbManager->getLastError();
@@ -223,38 +280,41 @@ ReassignmentResult RotationScheduler::reassignEmployee(int employeeId,
         }
     }
 
-    // 2. Uniform is NOT available for requested team! Fallback redirection
-    result.requestedTeamHadUniform = false;
+    // 4. Target team either exceeded the 7-person shift limit OR had no uniform in employee size:
+    // Redirect employee to another compatible team based on their Game Knowledge and Role!
+    result.requestedTeamHadUniform = (availForRequested > 0);
 
     QList<Team> allTeams = m_dbManager->getAllTeams();
     Team fallbackTeam;
-    int bestScore = -1; // Higher score = better candidate
+    int bestScore = -1;
 
     for (const Team& candidate : allTeams) {
         if (candidate.getName() == result.sourceTeam || candidate.getName() == requestedTargetTeam) {
             continue;
         }
 
-        // Candidate team must accept this employee based on role
+        // Candidate team must accept this employee based on BOTH role and game knowledge
         if (!candidate.acceptsEmployee(emp)) {
             continue;
+        }
+
+        int currentStaff = m_dbManager->getTeamMemberCount(candidate.getName());
+        int candidateMax = candidate.getMaxStaff() > 0 ? qMin(candidate.getMaxStaff(), MAX_SHIFT_STAFF) : MAX_SHIFT_STAFF;
+        if (currentStaff >= candidateMax) {
+            continue; // Already at 7-person shift limit
         }
 
         int availCount = m_dbManager->getAvailableUniformCountForTeam(
             candidate.getName(), candidate.getUniformType(), result.employeeSize);
 
         if (availCount > 0) {
-            int currentStaff = m_dbManager->getTeamMemberCount(candidate.getName());
             int score = 0;
-
             if (currentStaff < candidate.getMinStaff()) {
-                score = 100; // Critically understaffed - highest priority
+                score = 100 - currentStaff; // Dire / critically understaffed - highest priority
             } else if (currentStaff < candidate.getTargetStaff()) {
-                score = 50;  // Understaffed - high priority
-            } else if (currentStaff < candidate.getMaxStaff()) {
-                score = 10;  // Can take more staff
+                score = 50 - currentStaff;  // Understaffed (< 7) - high priority
             } else {
-                continue; // At capacity
+                score = 10;
             }
 
             if (score > bestScore) {
@@ -265,7 +325,6 @@ ReassignmentResult RotationScheduler::reassignEmployee(int employeeId,
     }
 
     if (fallbackTeam.getId() > 0) {
-        // Fallback team found with available uniform
         Uniform fallbackUni = m_dbManager->findAvailableUniformForTeam(
             fallbackTeam.getName(), fallbackTeam.getUniformType(), result.employeeSize);
 
@@ -286,11 +345,19 @@ ReassignmentResult RotationScheduler::reassignEmployee(int employeeId,
             result.success = true;
             result.assignedTeam = fallbackTeam.getName();
             result.fallbackUsed = true;
-            result.fallbackReason = QString("No uniform was available in office inventory for %1 in size '%2'. "
-                                            "System redirected %3 to %4 which has available uniform stock (Type: %5, Size: %2).")
-                                    .arg(requestedTargetTeam, result.employeeSize, result.employeeName,
-                                         fallbackTeam.getName(), fallbackUni.getType());
-            result.message = result.fallbackReason + " Rotations for both teams have been automatically adjusted.";
+            if (!targetUnderShiftCap) {
+                result.fallbackReason = QString("[#%1] %2: %3 -> %4 (%5 was at %6-staff shift limit; matched games: %7, Size: %8)")
+                                        .arg(employeeId)
+                                        .arg(result.employeeName, result.sourceTeam, fallbackTeam.getName(), requestedTargetTeam)
+                                        .arg(maxShiftCap)
+                                        .arg(emp.getGameKnowledge(), result.employeeSize);
+            } else {
+                result.fallbackReason = QString("[#%1] %2: %3 -> %4 (No size '%5' uniform in %6; redirected by game knowledge, Type: %7)")
+                                        .arg(employeeId)
+                                        .arg(result.employeeName, result.sourceTeam, fallbackTeam.getName(),
+                                             result.employeeSize, requestedTargetTeam, fallbackUni.getType());
+            }
+            result.message = result.fallbackReason;
             return result;
         } else {
             result.message = "Failed to update employee team for fallback: " + m_dbManager->getLastError();
@@ -298,12 +365,71 @@ ReassignmentResult RotationScheduler::reassignEmployee(int employeeId,
         }
     }
 
-    // No team has an available uniform in the employee's size
     result.success = false;
-    result.message = QString("Cannot reassign %1 to %2: No uniform available in size '%3' for %2, "
-                             "and no compatible alternative team has available uniforms in this size in office inventory!")
-                     .arg(result.employeeName, requestedTargetTeam, result.employeeSize);
+    if (!targetUnderShiftCap) {
+        result.message = QString("Cannot assign %1 to %2: Team is at the 7-person shift limit, and no other compatible team matching game knowledge (%3) has open slots and size '%4' uniforms.")
+                         .arg(result.employeeName, requestedTargetTeam, emp.getGameKnowledge(), result.employeeSize);
+    } else {
+        result.message = QString("Cannot reassign %1 to %2: No uniform available in size '%3' for %2, "
+                                 "and no compatible alternative team matching game knowledge has available uniforms in this size!")
+                         .arg(result.employeeName, requestedTargetTeam, result.employeeSize);
+    }
     return result;
+}
+
+QList<ReassignmentResult> RotationScheduler::relocateOverflowStaff(const QString& teamName)
+{
+    QList<ReassignmentResult> results;
+    if (!m_dbManager) return results;
+
+    QList<Team> teamsToCheck;
+    if (!teamName.isEmpty()) {
+        Team t = m_dbManager->getTeamByName(teamName);
+        if (t.getId() > 0) teamsToCheck.append(t);
+    } else {
+        teamsToCheck = m_dbManager->getAllTeams();
+    }
+
+    for (const Team& sourceTeam : teamsToCheck) {
+        QList<Employee> members = m_dbManager->getEmployeesByTeam(sourceTeam.getName());
+        int maxCap = sourceTeam.getMaxStaff() > 0 ? qMin(sourceTeam.getMaxStaff(), MAX_SHIFT_STAFF) : MAX_SHIFT_STAFF;
+        if (members.size() <= maxCap) {
+            continue;
+        }
+
+        // Move employees beyond the 7th employee to compatible teams based on their game knowledge
+        for (int i = maxCap; i < members.size(); ++i) {
+            Employee overflowEmp = members[i];
+
+            // Find best compatible target team with < 7 staff
+            QList<Team> allTeams = m_dbManager->getAllTeams();
+            QString bestTarget = "";
+            int bestPriority = -1;
+
+            for (const Team& candidate : allTeams) {
+                if (candidate.getName() == sourceTeam.getName()) continue;
+                if (!candidate.acceptsEmployee(overflowEmp)) continue;
+
+                int count = m_dbManager->getTeamMemberCount(candidate.getName());
+                int candMax = candidate.getMaxStaff() > 0 ? qMin(candidate.getMaxStaff(), MAX_SHIFT_STAFF) : MAX_SHIFT_STAFF;
+                if (count >= candMax) continue;
+
+                int priority = (candMax - count) * 10;
+                if (count < candidate.getMinStaff()) priority += 100;
+                if (priority > bestPriority) {
+                    bestPriority = priority;
+                    bestTarget = candidate.getName();
+                }
+            }
+
+            if (!bestTarget.isEmpty()) {
+                results.append(reassignEmployee(overflowEmp.getId(), bestTarget,
+                                                "Relocate overflow beyond 7-staff shift limit"));
+            }
+        }
+    }
+
+    return results;
 }
 
 ShiftSchedule RotationScheduler::adjustTeamRotation(const QString& teamName,
@@ -318,14 +444,15 @@ ShiftSchedule RotationScheduler::adjustTeamRotation(const QString& teamName,
     if (team.getId() <= 0) return ShiftSchedule();
 
     QList<Employee> members = m_dbManager->getEmployeesByTeam(teamName);
-    ShiftSchedule schedule = generate8HourSchedule(team, members, date, startTime, slotMinutes, numSlots);
+    int effectiveSlotMinutes = normalizeSlotMinutes(slotMinutes, team, members.size());
+    ShiftSchedule schedule = generate8HourSchedule(team, members, date, startTime, effectiveSlotMinutes, numSlots);
 
     // Persist to database
     m_dbManager->clearShiftSchedule(teamName, date);
     for (const RotationSlot& slot : schedule.rotationSlots) {
         QStringList assignStrings;
         for (const TableAssignment& assign : slot.tableAssignments) {
-            assignStrings << QString("Table %1: %2").arg(assign.tableNumber).arg(assign.employeeName);
+            assignStrings << QString("Table %1 (%2): %3").arg(assign.tableNumber).arg(assign.tableGame, assign.employeeName);
         }
         m_dbManager->saveScheduleSlot(teamName, date, slot.slotIndex,
                                      slot.startTime.toString("hh:mm"),

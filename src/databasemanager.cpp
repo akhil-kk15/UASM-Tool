@@ -21,9 +21,10 @@ DatabaseManager::~DatabaseManager()
 
 bool DatabaseManager::initializeDatabase(const QString& dbPath)
 {
-    QString resolvedPath = dbPath.isEmpty() ? QStringLiteral("uniformmanagement.db") : dbPath;
+    const bool isDefaultDb = dbPath.isEmpty() || dbPath == QStringLiteral("uniformmanagement.db");
+    QString resolvedPath = isDefaultDb ? QStringLiteral("uniformmanagement.db") : dbPath;
 
-    if (resolvedPath == QStringLiteral("uniformmanagement.db") && !QFileInfo::exists(resolvedPath)) {
+    if (isDefaultDb && !QFileInfo::exists(resolvedPath)) {
         const QString appDir = QCoreApplication::applicationDirPath();
         const QStringList candidatePaths = {
             QDir(appDir).filePath(QStringLiteral("uniformmanagement.db")),
@@ -52,10 +53,6 @@ bool DatabaseManager::initializeDatabase(const QString& dbPath)
         }
 
         if (!foundExisting && !appDir.isEmpty()) {
-            // No sample database found anywhere: create a fresh one next to the
-            // executable so its location does not depend on the working
-            // directory (Visual Studio, VS Code, Qt Creator and the terminal
-            // all behave the same way on Windows and Linux).
             resolvedPath = QDir(appDir).filePath(QStringLiteral("uniformmanagement.db"));
         }
     }
@@ -81,6 +78,54 @@ bool DatabaseManager::initializeDatabase(const QString& dbPath)
     }
 
     upgradeTablesIfNeeded();
+
+    if (isDefaultDb) {
+        int uniformCount = 0;
+        int teamCount = 0;
+        int minEmpId = 0;
+        QSqlQuery countQuery("SELECT COUNT(*) FROM uniforms");
+        if (countQuery.next()) uniformCount = countQuery.value(0).toInt();
+        QSqlQuery teamCountQuery("SELECT COUNT(*) FROM teams");
+        if (teamCountQuery.next()) teamCount = teamCountQuery.value(0).toInt();
+        QSqlQuery minEmpQuery("SELECT COALESCE(MIN(id), 0) FROM employees");
+        if (minEmpQuery.next()) minEmpId = minEmpQuery.value(0).toInt();
+
+        if (uniformCount == 0 || teamCount < 15 || (minEmpId > 0 && minEmpId < 10000)) {
+            const QString appDir = QCoreApplication::applicationDirPath();
+            const QStringList sqlCandidates = {
+                QDir::current().filePath(QStringLiteral("seed_test_data.sql")),
+                QDir::current().filePath(QStringLiteral("../seed_test_data.sql")),
+                QDir::current().filePath(QStringLiteral("../../seed_test_data.sql")),
+                QDir(appDir).filePath(QStringLiteral("seed_test_data.sql")),
+                QDir(appDir).filePath(QStringLiteral("../seed_test_data.sql")),
+                QDir(appDir).filePath(QStringLiteral("../../seed_test_data.sql"))
+            };
+            for (const QString& sqlPath : sqlCandidates) {
+                QFile sqlFile(sqlPath);
+                if (sqlFile.exists() && sqlFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                    const QString sqlContent = QString::fromUtf8(sqlFile.readAll());
+                    sqlFile.close();
+                    QStringList cleanedLines;
+                    for (const QString& line : sqlContent.split('\n')) {
+                        const QString trimmed = line.trimmed();
+                        if (!trimmed.startsWith(QStringLiteral("--"))) {
+                            cleanedLines.append(line);
+                        }
+                    }
+                    const QStringList statements = cleanedLines.join('\n').split(';', Qt::SkipEmptyParts);
+                    QSqlQuery seedQuery;
+                    for (const QString& stmt : statements) {
+                        const QString s = stmt.trimmed();
+                        if (!s.isEmpty()) {
+                            seedQuery.exec(s);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
     seedDefaultTeamsIfEmpty();
 
     return true;
@@ -106,7 +151,8 @@ bool DatabaseManager::createTables()
                     "uniform_size TEXT DEFAULT 'M',"
                     "email TEXT,"
                     "phone TEXT,"
-                    "role_type TEXT DEFAULT 'Dealer'"
+                    "role_type TEXT DEFAULT 'Dealer',"
+                    "game_knowledge TEXT DEFAULT ''"
                     ")")) {
         m_lastError = query.lastError().text();
         return false;
@@ -147,10 +193,11 @@ bool DatabaseManager::createTables()
                     "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                     "name TEXT UNIQUE NOT NULL,"
                     "uniform_type TEXT,"
-                    "target_staff INTEGER DEFAULT 5,"
-                    "min_staff INTEGER DEFAULT 4,"
+                    "target_staff INTEGER DEFAULT 7,"
+                    "min_staff INTEGER DEFAULT 5,"
                     "max_staff INTEGER DEFAULT 7,"
-                    "team_type TEXT DEFAULT 'Standard'"
+                    "team_type TEXT DEFAULT 'Standard',"
+                    "table_games TEXT DEFAULT 'Blackjack, Blackjack, Blackjack, Blackjack'"
                     ")")) {
         m_lastError = query.lastError().text();
         return false;
@@ -183,8 +230,10 @@ bool DatabaseManager::upgradeTablesIfNeeded()
     query.exec("ALTER TABLE employees ADD COLUMN email TEXT;");
     query.exec("ALTER TABLE employees ADD COLUMN phone TEXT;");
     query.exec("ALTER TABLE employees ADD COLUMN role_type TEXT DEFAULT 'Dealer';");
+    query.exec("ALTER TABLE employees ADD COLUMN game_knowledge TEXT DEFAULT '';");
     query.exec("ALTER TABLE uniforms ADD COLUMN team TEXT DEFAULT '';");
     query.exec("ALTER TABLE teams ADD COLUMN team_type TEXT DEFAULT 'Standard';");
+    query.exec("ALTER TABLE teams ADD COLUMN table_games TEXT DEFAULT 'Blackjack, Blackjack, Blackjack, Blackjack';");
     return true;
 }
 
@@ -192,19 +241,42 @@ void DatabaseManager::seedDefaultTeamsIfEmpty()
 {
     QSqlQuery checkQuery("SELECT COUNT(*) FROM teams");
     if (checkQuery.next() && checkQuery.value(0).toInt() == 0) {
-        addTeam(Team(1, "Team Alpha", "Alpha Uniform", 5, 4, 7, "Standard"));
-        addTeam(Team(2, "Team Beta", "Beta Uniform", 5, 4, 7, "Standard"));
-        addTeam(Team(3, "Team Gamma", "Gamma Uniform", 5, 4, 7, "Standard"));
-        addTeam(Team(4, "Studio Live", "Studio Gold", 5, 4, 7, "Game Show Host"));
+        addTeam(Team(1,  "Team Alpha",    "Team Alpha Vest",    7, 5, 7, "Dealer",         "Blackjack, Blackjack, Blackjack, Blackjack"));
+        addTeam(Team(2,  "Team Bravo",    "Team Bravo Vest",    7, 5, 7, "Dealer",         "Blackjack, Blackjack, Blackjack, Blackjack"));
+        addTeam(Team(3,  "Team Charlie",  "Team Charlie Vest",  7, 5, 7, "Dealer",         "Blackjack, Blackjack, Roulette, Roulette"));
+        addTeam(Team(4,  "Team Delta",    "Team Delta Vest",    7, 5, 7, "Dealer",         "Blackjack, Roulette, Blackjack, Roulette"));
+        addTeam(Team(5,  "Team Echo",     "Team Echo Vest",     7, 5, 7, "Dealer",         "Blackjack, Roulette, Baccarat, Baccarat"));
+        addTeam(Team(6,  "Team Foxtrot",  "Team Foxtrot Vest",  7, 5, 7, "Dealer",         "Baccarat, Baccarat, Roulette, Blackjack"));
+        addTeam(Team(7,  "Team Golf",     "Team Golf Vest",     7, 5, 7, "Dealer",         "Poker, Poker, Blackjack, Roulette"));
+        addTeam(Team(8,  "Team Hotel",    "Team Hotel Vest",    7, 5, 7, "Dealer",         "Blackjack, Baccarat, Poker, Roulette"));
+        addTeam(Team(9,  "Team India",    "Team India Vest",    7, 5, 7, "Dealer",         "Craps, Craps, Blackjack, Roulette"));
+        addTeam(Team(10, "Team Juliet",   "Team Juliet Vest",   7, 5, 7, "Dealer",         "Baccarat, Poker, Craps, Blackjack"));
+        addTeam(Team(11, "Team Kilo",     "Team Kilo Vest",     7, 5, 7, "Dealer",         "Roulette, Roulette, Baccarat, Poker"));
+        addTeam(Team(12, "Team Lima",     "Team Lima Vest",     7, 5, 7, "Dealer",         "Poker, Craps, Baccarat, Roulette"));
+        addTeam(Team(13, "Team Mike",     "Team Mike Vest",     7, 5, 7, "Dealer",         "Blackjack, Roulette, Poker, Craps"));
+        addTeam(Team(14, "Studio Live",   "Studio Live Suit",   7, 5, 7, "Game Show Host", "Game Show, Game Show, Game Show, Game Show"));
+        addTeam(Team(15, "Studio Royale", "Studio Royale Suit", 7, 5, 7, "Game Show Host", "Game Show, Game Show, Game Show, Game Show"));
     }
 }
 
 // Employee operations
 bool DatabaseManager::addEmployee(const Employee& employee)
 {
+    int nextId = employee.getId();
+    if (nextId < 10000 || nextId > 99999) {
+        QSqlQuery maxQuery("SELECT COALESCE(MAX(id), 10000) + 1 FROM employees");
+        if (maxQuery.next()) {
+            nextId = maxQuery.value(0).toInt();
+        }
+        if (nextId < 10001) {
+            nextId = 10001;
+        }
+    }
+
     QSqlQuery query;
-    query.prepare("INSERT INTO employees (name, department, designation, uniform_size, email, phone, role_type) "
-                  "VALUES (:name, :department, :designation, :uniform_size, :email, :phone, :role_type)");
+    query.prepare("INSERT INTO employees (id, name, department, designation, uniform_size, email, phone, role_type, game_knowledge) "
+                  "VALUES (:id, :name, :department, :designation, :uniform_size, :email, :phone, :role_type, :game_knowledge)");
+    query.bindValue(":id", nextId);
     query.bindValue(":name", employee.getName());
     query.bindValue(":department", employee.getDepartment());
     query.bindValue(":designation", employee.getDesignation());
@@ -212,6 +284,7 @@ bool DatabaseManager::addEmployee(const Employee& employee)
     query.bindValue(":email", employee.getEmail());
     query.bindValue(":phone", employee.getPhone());
     query.bindValue(":role_type", employee.getRoleType().isEmpty() ? "Dealer" : employee.getRoleType());
+    query.bindValue(":game_knowledge", employee.getGameKnowledge());
 
     if (!query.exec()) {
         m_lastError = query.lastError().text();
@@ -224,7 +297,8 @@ bool DatabaseManager::updateEmployee(const Employee& employee)
 {
     QSqlQuery query;
     query.prepare("UPDATE employees SET name=:name, department=:department, designation=:designation, "
-                  "uniform_size=:uniform_size, email=:email, phone=:phone, role_type=:role_type WHERE id=:id");
+                  "uniform_size=:uniform_size, email=:email, phone=:phone, role_type=:role_type, "
+                  "game_knowledge=:game_knowledge WHERE id=:id");
     query.bindValue(":name", employee.getName());
     query.bindValue(":department", employee.getDepartment());
     query.bindValue(":designation", employee.getDesignation());
@@ -232,6 +306,7 @@ bool DatabaseManager::updateEmployee(const Employee& employee)
     query.bindValue(":email", employee.getEmail());
     query.bindValue(":phone", employee.getPhone());
     query.bindValue(":role_type", employee.getRoleType().isEmpty() ? "Dealer" : employee.getRoleType());
+    query.bindValue(":game_knowledge", employee.getGameKnowledge());
     query.bindValue(":id", employee.getId());
 
     if (!query.exec()) {
@@ -285,6 +360,7 @@ Employee DatabaseManager::getEmployee(int employeeId)
         employee.setPhone(query.value("phone").toString());
         QString role = query.value("role_type").toString();
         employee.setRoleType(role.isEmpty() ? "Dealer" : role);
+        employee.setGameKnowledge(query.value("game_knowledge").toString());
         return employee;
     }
     m_lastError = query.lastError().text();
@@ -307,6 +383,7 @@ QList<Employee> DatabaseManager::getAllEmployees()
         employee.setPhone(query.value("phone").toString());
         QString role = query.value("role_type").toString();
         employee.setRoleType(role.isEmpty() ? "Dealer" : role);
+        employee.setGameKnowledge(query.value("game_knowledge").toString());
         employees.append(employee);
     }
 
@@ -332,6 +409,7 @@ QList<Employee> DatabaseManager::getEmployeesByTeam(const QString& teamName)
             employee.setPhone(query.value("phone").toString());
             QString role = query.value("role_type").toString();
             employee.setRoleType(role.isEmpty() ? "Dealer" : role);
+            employee.setGameKnowledge(query.value("game_knowledge").toString());
             employees.append(employee);
         }
     }
@@ -342,14 +420,15 @@ QList<Employee> DatabaseManager::getEmployeesByTeam(const QString& teamName)
 bool DatabaseManager::addTeam(const Team& team)
 {
     QSqlQuery query;
-    query.prepare("INSERT INTO teams (name, uniform_type, target_staff, min_staff, max_staff, team_type) "
-                  "VALUES (:name, :uniform_type, :target_staff, :min_staff, :max_staff, :team_type)");
+    query.prepare("INSERT INTO teams (name, uniform_type, target_staff, min_staff, max_staff, team_type, table_games) "
+                  "VALUES (:name, :uniform_type, :target_staff, :min_staff, :max_staff, :team_type, :table_games)");
     query.bindValue(":name", team.getName());
     query.bindValue(":uniform_type", team.getUniformType());
     query.bindValue(":target_staff", team.getTargetStaff());
     query.bindValue(":min_staff", team.getMinStaff());
     query.bindValue(":max_staff", team.getMaxStaff());
     query.bindValue(":team_type", team.getTeamType().isEmpty() ? "Standard" : team.getTeamType());
+    query.bindValue(":table_games", team.getTableGames());
 
     if (!query.exec()) {
         m_lastError = query.lastError().text();
@@ -362,13 +441,14 @@ bool DatabaseManager::updateTeam(const Team& team)
 {
     QSqlQuery query;
     query.prepare("UPDATE teams SET name=:name, uniform_type=:uniform_type, target_staff=:target_staff, "
-                  "min_staff=:min_staff, max_staff=:max_staff, team_type=:team_type WHERE id=:id");
+                  "min_staff=:min_staff, max_staff=:max_staff, team_type=:team_type, table_games=:table_games WHERE id=:id");
     query.bindValue(":name", team.getName());
     query.bindValue(":uniform_type", team.getUniformType());
     query.bindValue(":target_staff", team.getTargetStaff());
     query.bindValue(":min_staff", team.getMinStaff());
     query.bindValue(":max_staff", team.getMaxStaff());
     query.bindValue(":team_type", team.getTeamType().isEmpty() ? "Standard" : team.getTeamType());
+    query.bindValue(":table_games", team.getTableGames());
     query.bindValue(":id", team.getId());
 
     if (!query.exec()) {
@@ -407,6 +487,7 @@ Team DatabaseManager::getTeam(int teamId)
         team.setMaxStaff(query.value("max_staff").toInt());
         QString type = query.value("team_type").toString();
         team.setTeamType(type.isEmpty() ? "Standard" : type);
+        team.setTableGames(query.value("table_games").toString());
         return team;
     }
     m_lastError = query.lastError().text();
@@ -429,6 +510,7 @@ Team DatabaseManager::getTeamByName(const QString& teamName)
         team.setMaxStaff(query.value("max_staff").toInt());
         QString type = query.value("team_type").toString();
         team.setTeamType(type.isEmpty() ? "Standard" : type);
+        team.setTableGames(query.value("table_games").toString());
         return team;
     }
     m_lastError = query.lastError().text();
@@ -450,6 +532,7 @@ QList<Team> DatabaseManager::getAllTeams()
         team.setMaxStaff(query.value("max_staff").toInt());
         QString type = query.value("team_type").toString();
         team.setTeamType(type.isEmpty() ? "Standard" : type);
+        team.setTableGames(query.value("table_games").toString());
         teams.append(team);
     }
     return teams;

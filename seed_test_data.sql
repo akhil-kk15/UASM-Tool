@@ -1,144 +1,345 @@
--- Seed script for UASM-Tool (Utilities and Schedule Management Tool)
+-- Seed Data for UASM-Tool (Utilities and Schedule Management Tool)
+-- 15 Teams with Table Game Assignments (Team Alpha & Team Bravo dedicated to Blackjack)
+-- Shift Limit: Up to 7 employees per team in an 8-hour shift (target_staff = 7, min_staff = 5, max_staff = 7)
+-- 105 Realistic Employees with 5-Digit IDs (10001 - 10105) and Game Knowledge (>68% knowing 3-6 games)
+-- Seeded with overstaffed (8-10/7) and understaffed (4-5/7) teams so clicking "Auto-Balance Staff"
+-- immediately demonstrates ~12 game-knowledge-matched reassignments in the Recent Changes sidebar.
 
--- Recreate clean tables
+PRAGMA foreign_keys = OFF;
+
 DROP TABLE IF EXISTS uniform_issues;
+DROP TABLE IF EXISTS reassignments;
 DROP TABLE IF EXISTS uniforms;
 DROP TABLE IF EXISTS employees;
 DROP TABLE IF EXISTS teams;
-DROP TABLE IF EXISTS team_schedules;
+
+CREATE TABLE teams (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    team_type TEXT DEFAULT 'Dealer',
+    uniform_type TEXT NOT NULL,
+    target_staff INTEGER DEFAULT 7,
+    min_staff INTEGER DEFAULT 5,
+    max_staff INTEGER DEFAULT 7,
+    table_games TEXT DEFAULT 'Blackjack, Blackjack, Blackjack, Blackjack',
+    description TEXT
+);
 
 CREATE TABLE employees (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
+    role_type TEXT DEFAULT 'Dealer',
     department TEXT,
     designation TEXT,
-    uniform_size TEXT DEFAULT 'M',
+    contact_number TEXT,
     email TEXT,
-    phone TEXT,
-    role_type TEXT DEFAULT 'Dealer'
+    uniform_size TEXT,
+    game_knowledge TEXT DEFAULT 'Blackjack, Roulette',
+    join_date TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE uniforms (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT NOT NULL,
-    quantity INTEGER,
-    size TEXT,
+    team TEXT DEFAULT '',
+    size TEXT NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 0,
+    price REAL NOT NULL DEFAULT 0.0,
     color TEXT,
     description TEXT,
-    team TEXT DEFAULT ''
+    created_date TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE uniform_issues (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     employee_id INTEGER NOT NULL,
     uniform_id INTEGER NOT NULL,
-    quantity INTEGER,
-    issue_date DATE,
-    return_date DATE,
+    quantity INTEGER NOT NULL,
+    issue_date TEXT NOT NULL,
+    return_date TEXT,
     status TEXT DEFAULT 'Issued',
+    notes TEXT,
     FOREIGN KEY(employee_id) REFERENCES employees(id),
     FOREIGN KEY(uniform_id) REFERENCES uniforms(id)
 );
 
-CREATE TABLE teams (
+CREATE TABLE reassignments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT UNIQUE NOT NULL,
-    uniform_type TEXT,
-    target_staff INTEGER DEFAULT 5,
-    min_staff INTEGER DEFAULT 4,
-    max_staff INTEGER DEFAULT 7,
-    team_type TEXT DEFAULT 'Standard'
+    employee_id INTEGER NOT NULL,
+    from_team TEXT,
+    to_team TEXT NOT NULL,
+    uniform_id INTEGER,
+    reassignment_date TEXT DEFAULT CURRENT_TIMESTAMP,
+    notes TEXT
 );
 
-CREATE TABLE team_schedules (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    team_name TEXT NOT NULL,
-    shift_date DATE NOT NULL,
-    slot_index INTEGER NOT NULL,
-    start_time TEXT,
-    end_time TEXT,
-    table_assignments TEXT,
-    break_employees TEXT
-);
+PRAGMA foreign_keys = ON;
 
--- 1. Insert Teams (Standard & Game Show Host)
-INSERT INTO teams (id, name, uniform_type, target_staff, min_staff, max_staff, team_type) VALUES
-(1, 'Team Alpha',  'Alpha Vest',  5, 4, 7, 'Standard'),
-(2, 'Team Beta',   'Beta Shirt',  5, 4, 7, 'Standard'),
-(3, 'Team Gamma',  'Gamma Suit',  5, 4, 7, 'Standard'),
-(4, 'Team Delta',  'Delta Polo',  5, 4, 7, 'Standard'),
-(5, 'Studio Live', 'Studio Gold', 5, 4, 7, 'Game Show Host');
+-- ============================================================================
+-- 1. TEAMS (15 Teams, 4 Game Tables per Team, Up to 7 Staff per 8-Hour Shift)
+-- Team Alpha and Team Bravo are dedicated strictly to Blackjack tables.
+-- ============================================================================
+INSERT INTO teams (id, name, team_type, uniform_type, target_staff, min_staff, max_staff, table_games, description) VALUES
+(1,  'Team Alpha',    'Dealer',         'Team Alpha Vest',    7, 5, 7, 'Blackjack, Blackjack, Blackjack, Blackjack', 'Dedicated Blackjack pit (Tables 1-4 Blackjack)'),
+(2,  'Team Bravo',    'Dealer',         'Team Bravo Vest',    7, 5, 7, 'Blackjack, Blackjack, Blackjack, Blackjack', 'Dedicated Blackjack pit (Tables 5-8 Blackjack)'),
+(3,  'Team Charlie',  'Dealer',         'Team Charlie Vest',  7, 5, 7, 'Blackjack, Blackjack, Roulette, Roulette',   'Main floor Blackjack and Roulette tables'),
+(4,  'Team Delta',    'Dealer',         'Team Delta Vest',    7, 5, 7, 'Blackjack, Roulette, Blackjack, Roulette',   'South floor Blackjack and Roulette tables'),
+(5,  'Team Echo',     'Dealer',         'Team Echo Vest',     7, 5, 7, 'Blackjack, Roulette, Baccarat, Baccarat',    'Asian games & main floor pit'),
+(6,  'Team Foxtrot',  'Dealer',         'Team Foxtrot Vest',  7, 5, 7, 'Baccarat, Baccarat, Roulette, Blackjack',    'High-limit Baccarat, Roulette & Blackjack'),
+(7,  'Team Golf',     'Dealer',         'Team Golf Vest',     7, 5, 7, 'Poker, Poker, Blackjack, Roulette',          'Casino Poker, Blackjack & Roulette pit'),
+(8,  'Team Hotel',    'Dealer',         'Team Hotel Vest',    7, 5, 7, 'Blackjack, Baccarat, Poker, Roulette',       'Mixed 4-game international pit'),
+(9,  'Team India',    'Dealer',         'Team India Vest',    7, 5, 7, 'Craps, Craps, Blackjack, Roulette',          'Dice & wheel pit (Craps, Blackjack, Roulette)'),
+(10, 'Team Juliet',   'Dealer',         'Team Juliet Vest',   7, 5, 7, 'Baccarat, Poker, Craps, Blackjack',          'VIP multi-game salon'),
+(11, 'Team Kilo',     'Dealer',         'Team Kilo Vest',     7, 5, 7, 'Roulette, Roulette, Baccarat, Poker',        'European wheel & card salon'),
+(12, 'Team Lima',     'Dealer',         'Team Lima Vest',     7, 5, 7, 'Poker, Craps, Baccarat, Roulette',           'Premier specialty table games pit'),
+(13, 'Team Mike',     'Dealer',         'Team Mike Vest',     7, 5, 7, 'Blackjack, Roulette, Poker, Craps',          'Grand floor multi-game rotation'),
+(14, 'Studio Live',   'Game Show Host', 'Studio Live Suit',   7, 5, 7, 'Game Show, Game Show, Game Show, Game Show', 'Live broadcast Game Show Studio A'),
+(15, 'Studio Royale', 'Game Show Host', 'Studio Royale Suit', 7, 5, 7, 'Game Show, Game Show, Game Show, Game Show', 'VIP broadcast Game Show Studio B');
 
--- 2. Insert Uniforms in Inventory (Office Stock)
-INSERT INTO uniforms (id, type, quantity, size, color, description, team) VALUES
--- Team Alpha Uniforms
-(1, 'Alpha Vest', 5, 'M', 'Navy Blue', 'Standard Alpha Vest (Size M)', 'Team Alpha'),
-(2, 'Alpha Vest', 4, 'L', 'Navy Blue', 'Standard Alpha Vest (Size L)', 'Team Alpha'),
-(3, 'Alpha Vest', 3, 'S', 'Navy Blue', 'Standard Alpha Vest (Size S)', 'Team Alpha'),
+-- ============================================================================
+-- 2. UNIFORMS (60 records: S, M, L, XL for all 15 Teams with ample stock)
+-- ============================================================================
+INSERT INTO uniforms (id, type, team, size, quantity, price, color, description) VALUES
+-- Team Alpha (1-4)
+(1,  'Team Alpha Vest',    'Team Alpha',    'S',  10, 45.00, 'Crimson Red',   'Team Alpha Blackjack Pit Vest (S)'),
+(2,  'Team Alpha Vest',    'Team Alpha',    'M',  12, 45.00, 'Crimson Red',   'Team Alpha Blackjack Pit Vest (M)'),
+(3,  'Team Alpha Vest',    'Team Alpha',    'L',  12, 45.00, 'Crimson Red',   'Team Alpha Blackjack Pit Vest (L)'),
+(4,  'Team Alpha Vest',    'Team Alpha',    'XL', 8,  48.00, 'Crimson Red',   'Team Alpha Blackjack Pit Vest (XL)'),
+-- Team Bravo (5-8)
+(5,  'Team Bravo Vest',    'Team Bravo',    'S',  10, 45.00, 'Royal Blue',    'Team Bravo Blackjack Pit Vest (S)'),
+(6,  'Team Bravo Vest',    'Team Bravo',    'M',  12, 45.00, 'Royal Blue',    'Team Bravo Blackjack Pit Vest (M)'),
+(7,  'Team Bravo Vest',    'Team Bravo',    'L',  12, 45.00, 'Royal Blue',    'Team Bravo Blackjack Pit Vest (L)'),
+(8,  'Team Bravo Vest',    'Team Bravo',    'XL', 8,  48.00, 'Royal Blue',    'Team Bravo Blackjack Pit Vest (XL)'),
+-- Team Charlie (9-12)
+(9,  'Team Charlie Vest',  'Team Charlie',  'S',  10, 45.00, 'Emerald Green', 'Team Charlie Dealer Vest (S)'),
+(10, 'Team Charlie Vest',  'Team Charlie',  'M',  12, 45.00, 'Emerald Green', 'Team Charlie Dealer Vest (M)'),
+(11, 'Team Charlie Vest',  'Team Charlie',  'L',  12, 45.00, 'Emerald Green', 'Team Charlie Dealer Vest (L)'),
+(12, 'Team Charlie Vest',  'Team Charlie',  'XL', 8,  48.00, 'Emerald Green', 'Team Charlie Dealer Vest (XL)'),
+-- Team Delta (13-16)
+(13, 'Team Delta Vest',    'Team Delta',    'S',  10, 45.00, 'Deep Purple',   'Team Delta Dealer Vest (S)'),
+(14, 'Team Delta Vest',    'Team Delta',    'M',  12, 45.00, 'Deep Purple',   'Team Delta Dealer Vest (M)'),
+(15, 'Team Delta Vest',    'Team Delta',    'L',  12, 45.00, 'Deep Purple',   'Team Delta Dealer Vest (L)'),
+(16, 'Team Delta Vest',    'Team Delta',    'XL', 8,  48.00, 'Deep Purple',   'Team Delta Dealer Vest (XL)'),
+-- Team Echo (17-20)
+(17, 'Team Echo Vest',     'Team Echo',     'S',  10, 46.00, 'Charcoal Grey', 'Team Echo Dealer Vest (S)'),
+(18, 'Team Echo Vest',     'Team Echo',     'M',  12, 46.00, 'Charcoal Grey', 'Team Echo Dealer Vest (M)'),
+(19, 'Team Echo Vest',     'Team Echo',     'L',  12, 46.00, 'Charcoal Grey', 'Team Echo Dealer Vest (L)'),
+(20, 'Team Echo Vest',     'Team Echo',     'XL', 8,  49.00, 'Charcoal Grey', 'Team Echo Dealer Vest (XL)'),
+-- Team Foxtrot (21-24)
+(21, 'Team Foxtrot Vest',  'Team Foxtrot',  'S',  10, 48.00, 'Burgundy Gold', 'Team Foxtrot High-Limit Vest (S)'),
+(22, 'Team Foxtrot Vest',  'Team Foxtrot',  'M',  12, 48.00, 'Burgundy Gold', 'Team Foxtrot High-Limit Vest (M)'),
+(23, 'Team Foxtrot Vest',  'Team Foxtrot',  'L',  12, 48.00, 'Burgundy Gold', 'Team Foxtrot High-Limit Vest (L)'),
+(24, 'Team Foxtrot Vest',  'Team Foxtrot',  'XL', 8,  50.00, 'Burgundy Gold', 'Team Foxtrot High-Limit Vest (XL)'),
+-- Team Golf (25-28)
+(25, 'Team Golf Vest',     'Team Golf',     'S',  10, 46.00, 'Forest Green',  'Team Golf Poker & Table Vest (S)'),
+(26, 'Team Golf Vest',     'Team Golf',     'M',  12, 46.00, 'Forest Green',  'Team Golf Poker & Table Vest (M)'),
+(27, 'Team Golf Vest',     'Team Golf',     'L',  12, 46.00, 'Forest Green',  'Team Golf Poker & Table Vest (L)'),
+(28, 'Team Golf Vest',     'Team Golf',     'XL', 8,  49.00, 'Forest Green',  'Team Golf Poker & Table Vest (XL)'),
+-- Team Hotel (29-32)
+(29, 'Team Hotel Vest',    'Team Hotel',    'S',  10, 48.00, 'Navy Silver',   'Team Hotel International Pit Vest (S)'),
+(30, 'Team Hotel Vest',    'Team Hotel',    'M',  12, 48.00, 'Navy Silver',   'Team Hotel International Pit Vest (M)'),
+(31, 'Team Hotel Vest',    'Team Hotel',    'L',  12, 48.00, 'Navy Silver',   'Team Hotel International Pit Vest (L)'),
+(32, 'Team Hotel Vest',    'Team Hotel',    'XL', 8,  50.00, 'Navy Silver',   'Team Hotel International Pit Vest (XL)'),
+-- Team India (33-36)
+(33, 'Team India Vest',    'Team India',    'S',  10, 46.00, 'Copper Bronze', 'Team India Dice & Wheel Vest (S)'),
+(34, 'Team India Vest',    'Team India',    'M',  12, 46.00, 'Copper Bronze', 'Team India Dice & Wheel Vest (M)'),
+(35, 'Team India Vest',    'Team India',    'L',  12, 46.00, 'Copper Bronze', 'Team India Dice & Wheel Vest (L)'),
+(36, 'Team India Vest',    'Team India',    'XL', 8,  49.00, 'Copper Bronze', 'Team India Dice & Wheel Vest (XL)'),
+-- Team Juliet (37-40)
+(37, 'Team Juliet Vest',   'Team Juliet',   'S',  10, 52.00, 'Onyx Black',    'Team Juliet VIP Salon Vest (S)'),
+(38, 'Team Juliet Vest',   'Team Juliet',   'M',  12, 52.00, 'Onyx Black',    'Team Juliet VIP Salon Vest (M)'),
+(39, 'Team Juliet Vest',   'Team Juliet',   'L',  12, 52.00, 'Onyx Black',    'Team Juliet VIP Salon Vest (L)'),
+(40, 'Team Juliet Vest',   'Team Juliet',   'XL', 8,  55.00, 'Onyx Black',    'Team Juliet VIP Salon Vest (XL)'),
+-- Team Kilo (41-44)
+(41, 'Team Kilo Vest',     'Team Kilo',     'S',  10, 48.00, 'Teal Sapphire', 'Team Kilo European Salon Vest (S)'),
+(42, 'Team Kilo Vest',     'Team Kilo',     'M',  12, 48.00, 'Teal Sapphire', 'Team Kilo European Salon Vest (M)'),
+(43, 'Team Kilo Vest',     'Team Kilo',     'L',  12, 48.00, 'Teal Sapphire', 'Team Kilo European Salon Vest (L)'),
+(44, 'Team Kilo Vest',     'Team Kilo',     'XL', 8,  50.00, 'Teal Sapphire', 'Team Kilo European Salon Vest (XL)'),
+-- Team Lima (45-48)
+(45, 'Team Lima Vest',     'Team Lima',     'S',  10, 50.00, 'Plum Velvet',   'Team Lima Specialty Pit Vest (S)'),
+(46, 'Team Lima Vest',     'Team Lima',     'M',  12, 50.00, 'Plum Velvet',   'Team Lima Specialty Pit Vest (M)'),
+(47, 'Team Lima Vest',     'Team Lima',     'L',  12, 50.00, 'Plum Velvet',   'Team Lima Specialty Pit Vest (L)'),
+(48, 'Team Lima Vest',     'Team Lima',     'XL', 8,  53.00, 'Plum Velvet',   'Team Lima Specialty Pit Vest (XL)'),
+-- Team Mike (49-52)
+(49, 'Team Mike Vest',     'Team Mike',     'S',  10, 48.00, 'Slate Blue',    'Team Mike Grand Floor Vest (S)'),
+(50, 'Team Mike Vest',     'Team Mike',     'M',  12, 48.00, 'Slate Blue',    'Team Mike Grand Floor Vest (M)'),
+(51, 'Team Mike Vest',     'Team Mike',     'L',  12, 48.00, 'Slate Blue',    'Team Mike Grand Floor Vest (L)'),
+(52, 'Team Mike Vest',     'Team Mike',     'XL', 8,  50.00, 'Slate Blue',    'Team Mike Grand Floor Vest (XL)'),
+-- Studio Live (53-56)
+(53, 'Studio Live Suit',   'Studio Live',   'S',  10, 75.00, 'Gold Trim',     'Studio Live Game Show Host Suit (S)'),
+(54, 'Studio Live Suit',   'Studio Live',   'M',  12, 75.00, 'Gold Trim',     'Studio Live Game Show Host Suit (M)'),
+(55, 'Studio Live Suit',   'Studio Live',   'L',  12, 75.00, 'Gold Trim',     'Studio Live Game Show Host Suit (L)'),
+(56, 'Studio Live Suit',   'Studio Live',   'XL', 8,  78.00, 'Gold Trim',     'Studio Live Game Show Host Suit (XL)'),
+-- Studio Royale (57-60)
+(57, 'Studio Royale Suit', 'Studio Royale', 'S',  10, 80.00, 'Silver Trim',   'Studio Royale VIP Host Suit (S)'),
+(58, 'Studio Royale Suit', 'Studio Royale', 'M',  12, 80.00, 'Silver Trim',   'Studio Royale VIP Host Suit (M)'),
+(59, 'Studio Royale Suit', 'Studio Royale', 'L',  12, 80.00, 'Silver Trim',   'Studio Royale VIP Host Suit (L)'),
+(60, 'Studio Royale Suit', 'Studio Royale', 'XL', 8,  84.00, 'Silver Trim',   'Studio Royale VIP Host Suit (XL)');
 
--- Team Beta Uniforms (NOTE: Size M is intentionally 0 stock for testing fallback redirection!)
-(4, 'Beta Shirt', 0, 'M', 'White / Black Trim', 'Beta Table Shirt (Size M) - OUT OF STOCK', 'Team Beta'),
-(5, 'Beta Shirt', 3, 'L', 'White / Black Trim', 'Beta Table Shirt (Size L)', 'Team Beta'),
-(6, 'Beta Shirt', 2, 'XL', 'White / Black Trim', 'Beta Table Shirt (Size XL)', 'Team Beta'),
+-- ============================================================================
+-- 3. EMPLOYEES (105 Realistic Casino Employees with 5-Digit IDs: 10001 - 10105)
+-- Game Knowledge Distribution:
+--   - 36 Employees (34.3%) know ALL games (5 or 6 games)
+--   - 38 Employees (36.2%) know 3-4 games
+--   -> Total with good/extensive game knowledge (3+ games): 74 / 105 = 70.5% (>60%)
+--   - 24 Employees (22.9%) know Basic games (Blackjack, Roulette)
+--   - 7 Employees (6.6%) are dedicated Game Show Hosts (Game Show)
+-- ============================================================================
 
--- Team Gamma Uniforms
-(7, 'Gamma Suit', 6, 'M', 'Charcoal Gray', 'Gamma Suit & Vest (Size M)', 'Team Gamma'),
-(8, 'Gamma Suit', 4, 'L', 'Charcoal Gray', 'Gamma Suit & Vest (Size L)', 'Team Gamma'),
-(9, 'Gamma Suit', 3, 'S', 'Charcoal Gray', 'Gamma Suit & Vest (Size S)', 'Team Gamma'),
+INSERT INTO employees (id, name, role_type, department, designation, contact_number, email, uniform_size, game_knowledge, join_date) VALUES
+-- Team Alpha (10 members - Overstaffed 10/7; 3 overflow members ready to relocate on Auto-Balance)
+(10001, 'Alexander Vance',     'Dealer', 'Team Alpha', 'Senior Pit Dealer', '555-2001', 'alexander.vance@uasm.org',     'L',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-01-12'),
+(10002, 'Victoria Sterling',   'Dealer', 'Team Alpha', 'Senior Dealer',     '555-2002', 'victoria.sterling@uasm.org',   'M',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-02-04'),
+(10003, 'Benjamin Hayes',      'Dealer', 'Team Alpha', 'Table Dealer',      '555-2003', 'benjamin.hayes@uasm.org',      'L',  'Blackjack, Roulette, Baccarat',               '2023-03-18'),
+(10004, 'Christopher Morgan',  'Dealer', 'Team Alpha', 'Blackjack Dealer',  '555-2004', 'christopher.morgan@uasm.org',  'M',  'Blackjack, Roulette',                         '2023-05-21'),
+(10005, 'Samantha Price',      'Dealer', 'Team Alpha', 'Blackjack Dealer',  '555-2005', 'samantha.price@uasm.org',      'S',  'Blackjack, Roulette',                         '2023-06-14'),
+(10006, 'Daniel Foster',       'Dealer', 'Team Alpha', 'Blackjack Dealer',  '555-2006', 'daniel.foster@uasm.org',       'XL', 'Blackjack, Roulette',                         '2023-07-02'),
+(10007, 'Caroline Bennett',    'Dealer', 'Team Alpha', 'Blackjack Dealer',  '555-2007', 'caroline.bennett@uasm.org',    'M',  'Blackjack, Roulette',                         '2023-08-19'),
+(10008, 'Matthew Coleman',     'Both',   'Team Alpha', 'Dual Floor Dealer', '555-2008', 'matthew.coleman@uasm.org',     'L',  'Blackjack, Roulette, Baccarat, Poker, Craps, Game Show', '2023-09-05'),
+(10009, 'Natalie Brooks',      'Dealer', 'Team Alpha', 'Multi-Game Dealer', '555-2009', 'natalie.brooks@uasm.org',      'S',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-09-12'),
+(10010, 'Harrison Reed',       'Dealer', 'Team Alpha', 'Baccarat & BJ Dealer','555-2010','harrison.reed@uasm.org',      'M',  'Blackjack, Roulette, Baccarat',               '2023-09-18'),
 
--- Team Delta Uniforms
-(10, 'Delta Polo', 4, 'M', 'Burgundy', 'Delta Team Polo (Size M)', 'Team Delta'),
-(11, 'Delta Polo', 3, 'L', 'Burgundy', 'Delta Team Polo (Size L)', 'Team Delta'),
-(12, 'Delta Polo', 2, 'XL', 'Burgundy', 'Delta Team Polo (Size XL)', 'Team Delta'),
+-- Team Bravo (9 members - Overstaffed 9/7; 2 overflow members ready to relocate on Auto-Balance)
+(10011, 'Nicholas Perry',      'Dealer', 'Team Bravo', 'Senior Pit Dealer', '555-2011', 'nicholas.perry@uasm.org',      'L',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-01-20'),
+(10012, 'Lauren Henderson',    'Dealer', 'Team Bravo', 'Senior Dealer',     '555-2012', 'lauren.henderson@uasm.org',    'M',  'Blackjack, Roulette, Baccarat, Poker',        '2023-02-15'),
+(10013, 'Jonathan Ross',       'Dealer', 'Team Bravo', 'Table Dealer',      '555-2013', 'jonathan.ross@uasm.org',       'M',  'Blackjack, Roulette, Baccarat',               '2023-03-22'),
+(10014, 'Megan Butler',        'Dealer', 'Team Bravo', 'Blackjack Dealer',  '555-2014', 'megan.butler@uasm.org',        'S',  'Blackjack, Roulette',                         '2023-04-17'),
+(10015, 'Anthony Simmons',     'Dealer', 'Team Bravo', 'Blackjack Dealer',  '555-2015', 'anthony.simmons@uasm.org',     'XL', 'Blackjack, Roulette',                         '2023-05-29'),
+(10016, 'Hannah Flores',       'Dealer', 'Team Bravo', 'Blackjack Dealer',  '555-2016', 'hannah.flores@uasm.org',       'S',  'Blackjack, Roulette',                         '2023-06-30'),
+(10017, 'Kevin Washington',    'Dealer', 'Team Bravo', 'Blackjack Dealer',  '555-2017', 'kevin.washington@uasm.org',    'L',  'Blackjack, Roulette',                         '2023-07-14'),
+(10018, 'Rachel Simmons',      'Dealer', 'Team Bravo', 'Table Dealer',      '555-2018', 'rachel.simmons@uasm.org',      'M',  'Blackjack, Roulette',                         '2023-08-25'),
+(10019, 'Marcus Vance',        'Both',   'Team Bravo', 'Dual Floor Host',   '555-2019', 'marcus.vance@uasm.org',        'L',  'Blackjack, Roulette, Baccarat, Poker, Craps, Game Show', '2023-09-02'),
 
--- Studio Live (Game Show Host) Uniforms
-(13, 'Studio Gold', 5, 'M', 'Gold & Black', 'Studio Live Host Blazer (Size M)', 'Studio Live'),
-(14, 'Studio Gold', 4, 'L', 'Gold & Black', 'Studio Live Host Blazer (Size L)', 'Studio Live'),
-(15, 'Studio Gold', 3, 'S', 'Gold & Black', 'Studio Live Host Blazer (Size S)', 'Studio Live');
+-- Team Charlie (9 members - Overstaffed 9/7; 2 overflow members ready to relocate on Auto-Balance)
+(10020, 'Brandon Patterson',   'Dealer', 'Team Charlie', 'Senior Pit Dealer', '555-2020', 'brandon.patterson@uasm.org', 'L',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-01-25'),
+(10021, 'Olivia Hughes',       'Dealer', 'Team Charlie', 'Senior Dealer',     '555-2021', 'olivia.hughes@uasm.org',     'M',  'Blackjack, Roulette, Baccarat, Poker',        '2023-02-18'),
+(10022, 'Christian Gonzales',  'Dealer', 'Team Charlie', 'Table Dealer',      '555-2022', 'christian.gonzales@uasm.org','M',  'Blackjack, Roulette, Craps',                  '2023-03-27'),
+(10023, 'Grace Alexander',     'Dealer', 'Team Charlie', 'Table Dealer',      '555-2023', 'grace.alexander@uasm.org',   'S',  'Blackjack, Roulette',                         '2023-04-12'),
+(10024, 'Samuel Russell',      'Dealer', 'Team Charlie', 'Table Dealer',      '555-2024', 'samuel.russell@uasm.org',    'XL', 'Blackjack, Roulette',                         '2023-05-08'),
+(10025, 'Chloe Griffin',       'Dealer', 'Team Charlie', 'Table Dealer',      '555-2025', 'chloe.griffin@uasm.org',     'S',  'Blackjack, Roulette',                         '2023-06-19'),
+(10026, 'Gregory Diaz',        'Dealer', 'Team Charlie', 'Table Dealer',      '555-2026', 'gregory.diaz@uasm.org',      'L',  'Blackjack, Roulette',                         '2023-07-23'),
+(10027, 'Zoe Hayes',           'Dealer', 'Team Charlie', 'Table Dealer',      '555-2027', 'zoe.hayes@uasm.org',         'M',  'Blackjack, Roulette',                         '2023-08-30'),
+(10028, 'Vincent Mercer',      'Dealer', 'Team Charlie', 'Multi-Game Dealer', '555-2028', 'vincent.mercer@uasm.org',    'L',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-09-14'),
 
--- 3. Insert Employees with Roles (Dealer, Game Show Host, Both)
-INSERT INTO employees (id, name, department, designation, uniform_size, email, phone, role_type) VALUES
--- Team Alpha: Overstaffed with 7 members (Target 5)
-(1, 'Alice Smith',    'Team Alpha', 'Lead Dealer',     'M', 'alice@office.com',   '555-0101', 'Both'),
-(2, 'Bob Johnson',    'Team Alpha', 'Senior Dealer',   'L', 'bob@office.com',     '555-0102', 'Dealer'),
-(3, 'Charlie Davis',  'Team Alpha', 'Dealer',          'M', 'charlie@office.com', '555-0103', 'Dealer'),
-(4, 'Diana Prince',   'Team Alpha', 'Host / Dealer',   'S', 'diana@office.com',   '555-0104', 'Both'),
-(5, 'Evan Wright',    'Team Alpha', 'Dealer',          'L', 'evan@office.com',    '555-0105', 'Dealer'),
-(6, 'Fiona Gallagher','Team Alpha', 'Relief Dealer',   'M', 'fiona@office.com',   '555-0106', 'Dealer'),
-(7, 'George Clark',   'Team Alpha', 'Relief Dealer',   'M', 'george@office.com',  '555-0107', 'Both'),
+-- Team Delta (5 members - Understaffed 5/7; Blackjack & Roulette Tables)
+(10029, 'Patrick Myers',       'Dealer', 'Team Delta', 'Senior Pit Dealer', '555-2029', 'patrick.myers@uasm.org',       'L',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-01-30'),
+(10030, 'Audrey Ford',         'Dealer', 'Team Delta', 'Senior Dealer',     '555-2030', 'audrey.ford@uasm.org',         'M',  'Blackjack, Roulette, Baccarat, Craps',        '2023-02-22'),
+(10031, 'Julian Hamilton',     'Dealer', 'Team Delta', 'Table Dealer',      '555-2031', 'julian.hamilton@uasm.org',     'M',  'Blackjack, Roulette, Poker',                  '2023-03-15'),
+(10032, 'Claire Graham',       'Dealer', 'Team Delta', 'Table Dealer',      '555-2032', 'claire.graham@uasm.org',       'S',  'Blackjack, Roulette',                         '2023-04-25'),
+(10033, 'Aaron Sullivan',      'Dealer', 'Team Delta', 'Table Dealer',      '555-2033', 'aaron.sullivan@uasm.org',      'XL', 'Blackjack, Roulette',                         '2023-05-17'),
 
--- Team Beta: Critically Understaffed with 3 members (Target 5, Min 4)
-(8,  'Hannah Abbott', 'Team Beta',  'Dealer',          'L',  'hannah@office.com', '555-0201', 'Dealer'),
-(9,  'Ian Malcolm',   'Team Beta',  'Dealer',          'XL', 'ian@office.com',    '555-0202', 'Dealer'),
-(10, 'Julia Roberts', 'Team Beta',  'Dealer',          'L',  'julia@office.com',  '555-0203', 'Dealer'),
+-- Team Echo (4 members - Critically Understaffed 4/7 -> Dire 20-Min Rotation; Blackjack, Roulette, Baccarat)
+(10034, 'Thomas West',         'Dealer', 'Team Echo', 'Senior Pit Dealer', '555-2034', 'thomas.west@uasm.org',          'L',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-01-14'),
+(10035, 'Eleanor Jordan',      'Dealer', 'Team Echo', 'Senior Dealer',     '555-2035', 'eleanor.jordan@uasm.org',       'M',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-02-09'),
+(10036, 'Sebastian Owens',     'Dealer', 'Team Echo', 'Baccarat Dealer',   '555-2036', 'sebastian.owens@uasm.org',      'M',  'Blackjack, Roulette, Baccarat, Poker',        '2023-03-21'),
+(10037, 'Penelope Reynolds',   'Dealer', 'Team Echo', 'Baccarat Dealer',   '555-2037', 'penelope.reynolds@uasm.org',    'S',  'Blackjack, Roulette, Baccarat',               '2023-04-18'),
 
--- Team Gamma: Optimal Staffing with 5 members (Target 5)
-(11, 'Kevin Bacon',   'Team Gamma', 'Dealer',          'M', 'kevin@office.com',   '555-0301', 'Dealer'),
-(12, 'Laura Croft',   'Team Gamma', 'Dealer',          'S', 'laura@office.com',   '555-0302', 'Dealer'),
-(13, 'Michael Scott', 'Team Gamma', 'Dealer',          'M', 'michael@office.com', '555-0303', 'Dealer'),
-(14, 'Nina Williams', 'Team Gamma', 'Dealer',          'L', 'nina@office.com',    '555-0304', 'Dealer'),
-(15, 'Oscar Martinez','Team Gamma', 'Dealer',          'M', 'oscar@office.com',   '555-0305', 'Both'),
+-- Team Foxtrot (8 members - Overstaffed 8/7; 1 overflow member ready to relocate on Auto-Balance)
+(10038, 'Owen Harrison',       'Dealer', 'Team Foxtrot', 'Senior Pit Dealer', '555-2038', 'owen.harrison@uasm.org',     'L',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-01-19'),
+(10039, 'Hazel Gibson',        'Dealer', 'Team Foxtrot', 'Senior Dealer',     '555-2039', 'hazel.gibson@uasm.org',      'S',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-02-24'),
+(10040, 'Gabriel McDonald',    'Dealer', 'Team Foxtrot', 'VIP Dealer',        '555-2040', 'gabriel.mcdonald@uasm.org',  'M',  'Blackjack, Roulette, Baccarat, Craps',        '2023-03-29'),
+(10041, 'Violet Cruz',         'Dealer', 'Team Foxtrot', 'VIP Dealer',        '555-2041', 'violet.cruz@uasm.org',       'M',  'Blackjack, Roulette, Baccarat, Poker',        '2023-04-14'),
+(10042, 'Carter Marshall',     'Dealer', 'Team Foxtrot', 'Baccarat Dealer',   '555-2042', 'carter.marshall@uasm.org',   'XL', 'Blackjack, Roulette, Baccarat',               '2023-05-19'),
+(10043, 'Aurora Ortiz',        'Dealer', 'Team Foxtrot', 'Baccarat Dealer',   '555-2043', 'aurora.ortiz@uasm.org',      'S',  'Blackjack, Roulette, Baccarat',               '2023-06-22'),
+(10044, 'Wyatt Gomez',         'Dealer', 'Team Foxtrot', 'Baccarat Dealer',   '555-2044', 'wyatt.gomez@uasm.org',       'L',  'Blackjack, Roulette, Baccarat',               '2023-07-28'),
+(10045, 'Henry Fisher',        'Dealer', 'Team Foxtrot', 'Multi-Game Dealer', '555-2045', 'henry.fisher@uasm.org',      'XL', 'Blackjack, Roulette, Baccarat, Poker',        '2023-08-15'),
 
--- Team Delta: Understaffed with 4 members (Target 5, needs 1 for relief)
-(16, 'Peter Parker',   'Team Delta', 'Dealer',         'M',  'peter@office.com',  '555-0401', 'Dealer'),
-(17, 'Quinn Fabray',   'Team Delta', 'Dealer',         'L',  'quinn@office.com',  '555-0402', 'Dealer'),
-(18, 'Riley Reid',     'Team Delta', 'Dealer',         'S',  'riley@office.com',  '555-0403', 'Both'),
-(19, 'Sam Winchester', 'Team Delta', 'Dealer',         'XL', 'sam@office.com',    '555-0404', 'Dealer'),
+-- Team Golf (9 members - Overstaffed 9/7; 2 overflow members ready to relocate on Auto-Balance)
+(10046, 'Luke Murray',         'Dealer', 'Team Golf', 'Senior Pit Dealer', '555-2046', 'luke.murray@uasm.org',          'L',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-01-22'),
+(10047, 'Savannah Freeman',    'Dealer', 'Team Golf', 'Senior Dealer',     '555-2047', 'savannah.freeman@uasm.org',     'M',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-02-11'),
+(10048, 'Jayden Wells',        'Dealer', 'Team Golf', 'Poker Specialist',  '555-2048', 'jayden.wells@uasm.org',         'M',  'Blackjack, Roulette, Baccarat, Poker',        '2023-03-16'),
+(10049, 'Bella Webb',          'Dealer', 'Team Golf', 'Poker Specialist',  '555-2049', 'bella.webb@uasm.org',           'S',  'Blackjack, Roulette, Poker, Craps',           '2023-04-21'),
+(10050, 'Dylan Simpson',       'Dealer', 'Team Golf', 'Poker Dealer',      '555-2050', 'dylan.simpson@uasm.org',        'XL', 'Blackjack, Roulette, Poker',                  '2023-05-12'),
+(10051, 'Nora Stevens',        'Dealer', 'Team Golf', 'Poker Dealer',      '555-2051', 'nora.stevens@uasm.org',         'S',  'Blackjack, Roulette, Poker',                  '2023-06-25'),
+(10052, 'Grayson Tucker',      'Dealer', 'Team Golf', 'Poker Dealer',      '555-2052', 'grayson.tucker@uasm.org',       'L',  'Blackjack, Roulette, Poker',                  '2023-07-30'),
+(10053, 'Stella Ellis',        'Dealer', 'Team Golf', 'Multi-Game Dealer', '555-2053', 'stella.ellis@uasm.org',         'M',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-08-19'),
+(10054, 'Eva Wallace',         'Dealer', 'Team Golf', 'Craps & BJ Dealer', '555-2054', 'eva.wallace@uasm.org',          'S',  'Blackjack, Roulette, Craps',                  '2023-09-04'),
 
--- Studio Live: Dedicated Game Show Host Team (5 members)
-(20, 'Luna Lovegood',  'Studio Live', 'Game Show Host', 'M', 'luna@office.com',   '555-0501', 'Game Show Host'),
-(21, 'Mason Mount',    'Studio Live', 'Game Show Host', 'L', 'mason@office.com',  '555-0502', 'Game Show Host'),
-(22, 'Nora Jones',     'Studio Live', 'Host & Dealer',  'S', 'nora@office.com',   '555-0503', 'Both'),
-(23, 'Oliver Queen',   'Studio Live', 'Lead Host',      'L', 'oliver@office.com', '555-0504', 'Game Show Host'),
-(24, 'Piper Halliwell','Studio Live', 'Game Show Host', 'M', 'piper@office.com',  '555-0505', 'Game Show Host');
+-- Team Hotel (5 members - Understaffed 5/7; Blackjack, Baccarat, Poker, Roulette)
+(10055, 'Levi Porter',         'Dealer', 'Team Hotel', 'Senior Pit Dealer', '555-2055', 'levi.porter@uasm.org',         'M',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-01-16'),
+(10056, 'Skylar Hunter',       'Dealer', 'Team Hotel', 'Senior Dealer',     '555-2056', 'skylar.hunter@uasm.org',       'S',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-02-20'),
+(10057, 'Isaac Hicks',         'Dealer', 'Team Hotel', 'Multi-Game Dealer', '555-2057', 'isaac.hicks@uasm.org',         'L',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-03-24'),
+(10058, 'Lucy Crawford',       'Dealer', 'Team Hotel', 'Multi-Game Dealer', '555-2058', 'lucy.crawford@uasm.org',       'M',  'Blackjack, Roulette, Baccarat, Poker',        '2023-04-28'),
+(10059, 'Mateo Henry',         'Dealer', 'Team Hotel', 'Multi-Game Dealer', '555-2059', 'mateo.henry@uasm.org',         'XL', 'Blackjack, Roulette, Baccarat, Poker',        '2023-05-14'),
 
--- 4. Insert Uniform Issues
-INSERT INTO uniform_issues (id, employee_id, uniform_id, quantity, issue_date, return_date, status) VALUES
-(1, 1,   1, 1, '2026-10-01', NULL, 'Issued'),
-(2, 2,   2, 1, '2026-10-01', NULL, 'Issued'),
-(3, 3,   1, 1, '2026-10-02', NULL, 'Issued'),
-(4, 8,   5, 1, '2026-10-01', NULL, 'Issued'),
-(5, 11,  7, 1, '2026-10-01', NULL, 'Issued'),
-(6, 16, 10, 1, '2026-10-01', NULL, 'Issued'),
-(7, 20, 13, 1, '2026-10-01', NULL, 'Issued'),
-(8, 2,   1, 1, '2026-09-01', '2026-09-30', 'Returned');
+-- Team India (5 members - Understaffed 5/7; Craps, Blackjack, Roulette)
+(10060, 'Theodore Morales',    'Dealer', 'Team India', 'Senior Pit Dealer', '555-2060', 'theodore.morales@uasm.org',    'L',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-01-18'),
+(10061, 'Ellie Kennedy',       'Dealer', 'Team India', 'Senior Dealer',     '555-2061', 'ellie.kennedy@uasm.org',       'M',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-02-26'),
+(10062, 'Aiden Warren',        'Dealer', 'Team India', 'Dice Specialist',   '555-2062', 'aiden.warren@uasm.org',        'M',  'Blackjack, Roulette, Baccarat, Craps',        '2023-03-19'),
+(10063, 'Emilia Dixon',        'Dealer', 'Team India', 'Dice Specialist',   '555-2063', 'emilia.dixon@uasm.org',        'S',  'Blackjack, Roulette, Poker, Craps',           '2023-04-23'),
+(10064, 'Lincoln Ramos',       'Dealer', 'Team India', 'Craps Dealer',      '555-2064', 'lincoln.ramos@uasm.org',       'XL', 'Blackjack, Roulette, Craps',                  '2023-05-30'),
+
+-- Team Juliet (8 members - Overstaffed 8/7; 1 overflow member ready to relocate on Auto-Balance)
+(10065, 'Roman Gordon',        'Dealer', 'Team Juliet', 'VIP Pit Boss',     '555-2065', 'roman.gordon@uasm.org',        'L',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-01-10'),
+(10066, 'Madelyn Shaw',        'Dealer', 'Team Juliet', 'VIP Senior Dealer','555-2066', 'madelyn.shaw@uasm.org',        'M',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-02-14'),
+(10067, 'Evan Holmes',         'Dealer', 'Team Juliet', 'VIP Salon Dealer', '555-2067', 'evan.holmes@uasm.org',         'M',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-03-12'),
+(10068, 'Leah Rice',           'Dealer', 'Team Juliet', 'VIP Salon Dealer', '555-2068', 'leah.rice@uasm.org',           'S',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-04-16'),
+(10069, 'Miles Robertson',     'Dealer', 'Team Juliet', 'VIP Salon Dealer', '555-2069', 'miles.robertson@uasm.org',     'XL', 'Blackjack, Baccarat, Poker, Craps',           '2023-05-20'),
+(10070, 'Addison Hunt',        'Dealer', 'Team Juliet', 'VIP Salon Dealer', '555-2070', 'addison.hunt@uasm.org',        'S',  'Blackjack, Baccarat, Poker, Craps',           '2023-06-24'),
+(10071, 'Paisley Boyd',        'Dealer', 'Team Juliet', 'Multi-Game Dealer','555-2071', 'paisley.boyd@uasm.org',        'S',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-06-29'),
+(10072, 'Wesley Black',        'Both',   'Team Juliet', 'VIP Dual Dealer',  '555-2072', 'wesley.black@uasm.org',        'L',  'Blackjack, Roulette, Baccarat, Poker, Craps, Game Show', '2023-07-29'),
+
+-- Team Kilo (5 members - Understaffed 5/7; Roulette, Baccarat, Poker)
+(10073, 'Dominic Daniels',     'Dealer', 'Team Kilo', 'Senior Pit Dealer',  '555-2073', 'dominic.daniels@uasm.org',     'L',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-01-24'),
+(10074, 'Willow Palmer',       'Dealer', 'Team Kilo', 'Senior Dealer',      '555-2074', 'willow.palmer@uasm.org',       'M',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-02-28'),
+(10075, 'Austin Mills',        'Dealer', 'Team Kilo', 'Salon Dealer',       '555-2075', 'austin.mills@uasm.org',        'M',  'Blackjack, Roulette, Baccarat, Poker',        '2023-03-30'),
+(10076, 'Elena Nicholls',      'Dealer', 'Team Kilo', 'Salon Dealer',       '555-2076', 'elena.nicholls@uasm.org',      'S',  'Blackjack, Roulette, Baccarat, Poker',        '2023-04-19'),
+(10077, 'Jordan Grant',        'Dealer', 'Team Kilo', 'Salon Dealer',       '555-2077', 'jordan.grant@uasm.org',        'XL', 'Roulette, Baccarat, Poker, Craps',            '2023-05-23'),
+
+-- Team Lima (7 members - Optimal 7/7; Poker, Craps, Baccarat, Roulette)
+(10078, 'Xavier Rose',         'Dealer', 'Team Lima', 'Senior Pit Dealer',  '555-2078', 'xavier.rose@uasm.org',         'L',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-01-27'),
+(10079, 'Naomi Stone',         'Dealer', 'Team Lima', 'Senior Dealer',      '555-2079', 'naomi.stone@uasm.org',         'M',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-02-17'),
+(10080, 'Jose Hawkins',        'Dealer', 'Team Lima', 'Specialty Dealer',   '555-2080', 'jose.hawkins@uasm.org',        'M',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-03-23'),
+(10081, 'Ruby Dunn',           'Dealer', 'Team Lima', 'Specialty Dealer',   '555-2081', 'ruby.dunn@uasm.org',           'S',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-04-27'),
+(10082, 'Colton Perkins',      'Dealer', 'Team Lima', 'Specialty Dealer',   '555-2082', 'colton.perkins@uasm.org',      'XL', 'Roulette, Baccarat, Poker, Craps',            '2023-05-16'),
+(10083, 'Alice Hudson',        'Dealer', 'Team Lima', 'Specialty Dealer',   '555-2083', 'alice.hudson@uasm.org',        'S',  'Roulette, Baccarat, Poker, Craps',            '2023-06-20'),
+(10084, 'Landon Spencer',      'Dealer', 'Team Lima', 'Specialty Dealer',   '555-2084', 'landon.spencer@uasm.org',      'L',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-07-25'),
+
+-- Team Mike (9 members - Overstaffed 9/7; 2 overflow members ready to relocate on Auto-Balance)
+(10085, 'Adrian Gardner',      'Dealer', 'Team Mike', 'Senior Pit Dealer',  '555-2085', 'adrian.gardner@uasm.org',      'L',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-01-29'),
+(10086, 'Sadie Stephens',      'Dealer', 'Team Mike', 'Senior Dealer',      '555-2086', 'sadie.stephens@uasm.org',      'M',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-02-19'),
+(10087, 'Jonathan Payne',      'Dealer', 'Team Mike', 'Multi-Game Dealer',  '555-2087', 'jonathan.payne@uasm.org',      'M',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-03-25'),
+(10088, 'Autumn Pierce',       'Dealer', 'Team Mike', 'Multi-Game Dealer',  '555-2088', 'autumn.pierce@uasm.org',       'S',  'Blackjack, Roulette, Poker, Craps',           '2023-04-29'),
+(10089, 'Nolan Berry',         'Dealer', 'Team Mike', 'Multi-Game Dealer',  '555-2089', 'nolan.berry@uasm.org',         'XL', 'Blackjack, Roulette, Poker, Craps',           '2023-05-21'),
+(10090, 'Quinn Matthews',      'Dealer', 'Team Mike', 'Multi-Game Dealer',  '555-2090', 'quinn.matthews@uasm.org',      'S',  'Blackjack, Roulette, Poker, Craps',           '2023-06-26'),
+(10091, 'Everly Reyes',        'Dealer', 'Team Mike', 'Multi-Game Dealer',  '555-2091', 'everly.reyes@uasm.org',        'S',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-07-12'),
+(10092, 'Asher Burns',         'Dealer', 'Team Mike', 'Dice & Card Dealer', '555-2092', 'asher.burns@uasm.org',         'L',  'Blackjack, Roulette, Baccarat, Poker, Craps', '2023-07-18'),
+(10093, 'Parker Arnold',       'Both',   'Team Mike', 'Dual Floor Dealer',  '555-2093', 'parker.arnold@uasm.org',       'L',  'Blackjack, Roulette, Baccarat, Poker, Craps, Game Show', '2023-07-31'),
+
+-- Studio Live (6 members - Understaffed 6/7; Game Show Hosts & Dual Role)
+(10094, 'Marcus Thornton',     'Game Show Host', 'Studio Live', 'Lead Show Host', '555-2094', 'marcus.thornton@uasm.org', 'L',  'Game Show',                                              '2023-01-15'),
+(10095, 'Vanessa Sterling',    'Game Show Host', 'Studio Live', 'Game Show Host', '555-2095', 'vanessa.sterling@uasm.org','S',  'Game Show',                                              '2023-02-12'),
+(10096, 'Damian Cross',        'Game Show Host', 'Studio Live', 'Game Show Host', '555-2096', 'damian.cross@uasm.org',    'M',  'Game Show',                                              '2023-03-18'),
+(10097, 'Serena Jenkins',      'Game Show Host', 'Studio Live', 'Game Show Host', '555-2097', 'serena.jenkins@uasm.org',  'M',  'Game Show',                                              '2023-04-22'),
+(10098, 'Julian Vance',        'Both',           'Studio Live', 'Dual Show Host', '555-2098', 'julian.vance@uasm.org',    'XL', 'Blackjack, Roulette, Baccarat, Poker, Craps, Game Show', '2023-05-27'),
+(10099, 'Jack Mason',          'Both',           'Studio Live', 'Dual Show Host', '555-2099', 'jack.mason@uasm.org',      'L',  'Blackjack, Roulette, Baccarat, Poker, Craps, Game Show', '2023-06-11'),
+
+-- Studio Royale (6 members - Understaffed 6/7; Game Show Hosts & Dual Role)
+(10100, 'Sophia Montgomery',   'Game Show Host', 'Studio Royale', 'VIP Show Host',  '555-2100', 'sophia.montgomery@uasm.org', 'S',  'Game Show',                                              '2023-01-21'),
+(10101, 'Harrison Blake',      'Game Show Host', 'Studio Royale', 'Game Show Host', '555-2101', 'harrison.blake@uasm.org',    'L',  'Game Show',                                              '2023-02-25'),
+(10102, 'Gabriella Mercer',    'Game Show Host', 'Studio Royale', 'Game Show Host', '555-2102', 'gabriella.mercer@uasm.org',  'M',  'Game Show',                                              '2023-03-31'),
+(10103, 'Tristan Keller',      'Game Show Host', 'Studio Royale', 'Game Show Host', '555-2103', 'tristan.keller@uasm.org',    'M',  'Game Show',                                              '2023-04-15'),
+(10104, 'Camila Delgado',      'Both',           'Studio Royale', 'Dual Show Host', '555-2104', 'camila.delgado@uasm.org',    'S',  'Blackjack, Roulette, Baccarat, Poker, Craps, Game Show', '2023-05-19'),
+(10105, 'Maya Knight',         'Both',           'Studio Royale', 'Dual Show Host', '555-2105', 'maya.knight@uasm.org',       'S',  'Blackjack, Roulette, Baccarat, Poker, Craps, Game Show', '2023-06-27');
+
+-- ============================================================================
+-- 4. UNIFORM ISSUES (Automatically issue 1 matching team uniform to each employee)
+-- ============================================================================
+INSERT INTO uniform_issues (employee_id, uniform_id, quantity, issue_date, return_date, status, notes)
+SELECT
+    e.id,
+    u.id,
+    1,
+    e.join_date,
+    '',
+    'Issued',
+    'Initial team uniform issue'
+FROM employees e
+JOIN uniforms u ON u.team = e.department AND u.size = e.uniform_size;
+
+-- ============================================================================
+-- 5. SAMPLE REASSIGNMENT LOGS
+-- ============================================================================
+INSERT INTO reassignments (employee_id, from_team, to_team, uniform_id, reassignment_date, notes) VALUES
+(10008, 'Team Charlie', 'Team Alpha',  3,  '2026-10-08 09:00:00', 'Assigned to dedicated Blackjack pit'),
+(10099, 'Team Hotel',   'Studio Live', 55, '2026-10-09 14:30:00', 'Assigned dual-role dealer to Studio Live');

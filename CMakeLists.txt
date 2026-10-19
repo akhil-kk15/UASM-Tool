@@ -186,15 +186,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/uniformmanagement.db")
     install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/uniformmanagement.db"
         DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
-    # Stage the sample database next to the executable the first time only, so
-    # rebuilding never overwrites a database the application has written data
-    # into. Delete the copy next to the executable to re-stage it.
+    # Populate the sample database in both the build root and executable output
+    # directory on every build invocation (including when clicking Build in
+    # CLion, Visual Studio, or Qt Creator even if no C++ sources changed).
+    add_custom_target(stage_sample_db ALL
+        COMMAND ${CMAKE_COMMAND}
+            -DSRC=${CMAKE_CURRENT_SOURCE_DIR}/uniformmanagement.db
+            -DDST=$<TARGET_FILE_DIR:UASM-Tool>/uniformmanagement.db
+            -DSEED_SQL=${CMAKE_CURRENT_SOURCE_DIR}/seed_test_data.sql
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/StageSampleDatabase.cmake
+        COMMENT "Populating sample database in build directory"
+        VERBATIM
+    )
+    add_dependencies(UASM-Tool stage_sample_db)
     add_custom_command(TARGET UASM-Tool POST_BUILD
         COMMAND ${CMAKE_COMMAND}
             -DSRC=${CMAKE_CURRENT_SOURCE_DIR}/uniformmanagement.db
             -DDST=$<TARGET_FILE_DIR:UASM-Tool>/uniformmanagement.db
+            -DSEED_SQL=${CMAKE_CURRENT_SOURCE_DIR}/seed_test_data.sql
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/StageSampleDatabase.cmake
-        COMMENT "Staging sample database (only if missing)"
+        COMMENT "Populating sample database next to executable"
         VERBATIM
     )
 endif()

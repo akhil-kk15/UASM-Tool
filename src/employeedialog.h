@@ -23,6 +23,7 @@ public:
 private slots:
     void on_okBtn_clicked();
     void on_cancelBtn_clicked();
+    void updateGameKnowledgeFromChecks();
 
 private:
     Ui::EmployeeDialog *ui;

@@ -21,27 +21,27 @@ public:
     ~MainWindow();
 
 private slots:
+    // Universal refresh & sidebar slots
+    void on_refreshBtn_clicked();
+    void on_clearChangesBtn_clicked();
+
     // Employee slots
     void on_addEmployeeBtn_clicked();
     void on_editEmployeeBtn_clicked();
     void on_deleteEmployeeBtn_clicked();
-    void on_refreshEmployeesBtn_clicked();
 
     // Uniform slots
     void on_addUniformBtn_clicked();
     void on_editUniformBtn_clicked();
     void on_deleteUniformBtn_clicked();
-    void on_refreshUniformsBtn_clicked();
 
     // Issue slots
     void on_issueUniformBtn_clicked();
     void on_returnUniformBtn_clicked();
-    void on_refreshIssuesBtn_clicked();
 
     // Team & Staffing slots
     void on_reassignStaffBtn_clicked();
     void on_autoBalanceBtn_clicked();
-    void on_refreshTeamsBtn_clicked();
     void on_teamsTable_itemSelectionChanged();
 
     // Rotation schedule slots
@@ -61,6 +61,7 @@ private:
     void loadTeamMembersTable(const QString& teamName);
     void populateRotationTeamCombo();
     void displayRotationSchedule(const ShiftSchedule& schedule);
+    void logRecentChange(const QString& message, bool isError = false);
 };
 
 #endif // MAINWINDOW_H

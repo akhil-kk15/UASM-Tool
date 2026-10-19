@@ -2,18 +2,19 @@
 
 Team::Team()
     : m_id(-1), m_name(""), m_uniformType("Standard"),
-      m_minStaff(4), m_targetStaff(5), m_maxStaff(7), m_tableCount(4),
-      m_teamType("Standard")
+      m_minStaff(5), m_targetStaff(7), m_maxStaff(7), m_tableCount(4),
+      m_teamType("Standard"), m_tableGames("")
 {
 }
 
 Team::Team(int id, const QString& name, const QString& uniformType,
            int targetStaff, int minStaff, int maxStaff,
-           const QString& teamType)
+           const QString& teamType, const QString& tableGames)
     : m_id(id), m_name(name), m_uniformType(uniformType),
       m_minStaff(minStaff), m_targetStaff(targetStaff), m_maxStaff(maxStaff),
       m_tableCount(4),
-      m_teamType(teamType.isEmpty() ? "Standard" : teamType)
+      m_teamType(teamType.isEmpty() ? "Standard" : teamType),
+      m_tableGames(tableGames)
 {
 }
 
@@ -25,6 +26,50 @@ int Team::getTargetStaff() const { return m_targetStaff; }
 int Team::getMaxStaff() const { return m_maxStaff; }
 int Team::getTableCount() const { return m_tableCount; }
 QString Team::getTeamType() const { return m_teamType; }
+QString Team::getTableGames() const
+{
+    if (!m_tableGames.trimmed().isEmpty()) {
+        return m_tableGames;
+    }
+    return isGameShowTeam()
+        ? QStringLiteral("Game Show, Game Show, Game Show, Game Show")
+        : QStringLiteral("Blackjack, Blackjack, Blackjack, Blackjack");
+}
+
+QStringList Team::getTableGamesList() const
+{
+    QStringList list;
+    const QStringList parts = getTableGames().split(',', Qt::SkipEmptyParts);
+    for (const QString& p : parts) {
+        QString trimmed = p.trimmed();
+        if (!trimmed.isEmpty()) {
+            list.append(trimmed);
+        }
+    }
+    QString fallback = isGameShowTeam() ? QStringLiteral("Game Show") : QStringLiteral("Blackjack");
+    while (list.size() < m_tableCount) {
+        list.append(list.isEmpty() ? fallback : list.last());
+    }
+    return list.mid(0, m_tableCount);
+}
+
+QStringList Team::getUniqueGames() const
+{
+    QStringList unique;
+    for (const QString& g : getTableGamesList()) {
+        bool exists = false;
+        for (const QString& u : unique) {
+            if (u.compare(g, Qt::CaseInsensitive) == 0) {
+                exists = true;
+                break;
+            }
+        }
+        if (!exists) {
+            unique.append(g);
+        }
+    }
+    return unique;
+}
 
 bool Team::isGameShowTeam() const
 {
@@ -32,7 +77,7 @@ bool Team::isGameShowTeam() const
     return (t.contains("game show") || t.contains("host"));
 }
 
-bool Team::acceptsEmployee(const Employee& emp) const
+bool Team::hasCompatibleRole(const Employee& emp) const
 {
     if (isGameShowTeam()) {
         return emp.canHostGameShow();
@@ -41,11 +86,44 @@ bool Team::acceptsEmployee(const Employee& emp) const
     }
 }
 
+QStringList Team::getMissingGames(const Employee& emp) const
+{
+    QStringList missing;
+    if (emp.getGameKnowledge().trimmed().isEmpty()) {
+        return missing;
+    }
+
+    if (isGameShowTeam()) {
+        if (!emp.canHostGameShow() && !emp.knowsGame("Game Show")) {
+            missing.append("Game Show");
+        }
+        return missing;
+    }
+
+    for (const QString& game : getUniqueGames()) {
+        if (!emp.knowsGame(game)) {
+            missing.append(game);
+        }
+    }
+    return missing;
+}
+
+bool Team::hasRequiredGameKnowledge(const Employee& emp) const
+{
+    return getMissingGames(emp).isEmpty();
+}
+
+bool Team::acceptsEmployee(const Employee& emp) const
+{
+    return hasCompatibleRole(emp) && hasRequiredGameKnowledge(emp);
+}
+
 QStringList Team::getAssignedTables() const
 {
     QStringList tables;
-    for (int i = 1; i <= m_tableCount; ++i) {
-        tables << QString("%1 - Table %2").arg(m_name).arg(i);
+    QStringList games = getTableGamesList();
+    for (int i = 0; i < m_tableCount; ++i) {
+        tables << QString("Table %1 (%2)").arg(i + 1).arg(games.value(i, "Blackjack"));
     }
     return tables;
 }
@@ -57,6 +135,7 @@ void Team::setMinStaff(int minStaff) { m_minStaff = minStaff; }
 void Team::setTargetStaff(int targetStaff) { m_targetStaff = targetStaff; }
 void Team::setMaxStaff(int maxStaff) { m_maxStaff = maxStaff; }
 void Team::setTeamType(const QString& teamType) { m_teamType = teamType; }
+void Team::setTableGames(const QString& tableGames) { m_tableGames = tableGames; }
 
 Team::StaffingStatus Team::evaluateStaffing(int currentStaffCount) const
 {

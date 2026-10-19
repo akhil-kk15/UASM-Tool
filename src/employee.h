@@ -2,6 +2,7 @@
 #define EMPLOYEE_H
 
 #include <QString>
+#include <QStringList>
 
 class Employee
 {
@@ -10,7 +11,8 @@ public:
     Employee(int id, const QString& name, const QString& department, 
              const QString& designation = "", const QString& uniformSize = "M",
              const QString& email = "", const QString& phone = "",
-             const QString& roleType = "Dealer");
+             const QString& roleType = "Dealer",
+             const QString& gameKnowledge = "");
 
     // Getters
     int getId() const;
@@ -22,10 +24,13 @@ public:
     QString getEmail() const;
     QString getPhone() const;
     QString getRoleType() const;
+    QString getGameKnowledge() const;
+    QStringList getKnownGamesList() const;
 
-    // Role helpers
+    // Role & Game Knowledge helpers
     bool canDeal() const;
     bool canHostGameShow() const;
+    bool knowsGame(const QString& game) const;
 
     // Setters
     void setId(int id);
@@ -37,6 +42,7 @@ public:
     void setEmail(const QString& email);
     void setPhone(const QString& phone);
     void setRoleType(const QString& roleType);
+    void setGameKnowledge(const QString& gameKnowledge);
 
 private:
     int m_id;
@@ -47,6 +53,7 @@ private:
     QString m_email;
     QString m_phone;
     QString m_roleType; // "Dealer", "Game Show Host", "Both"
+    QString m_gameKnowledge; // Comma-separated list e.g. "Blackjack, Roulette, Baccarat"
 };
 
 #endif // EMPLOYEE_H

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1200</width>
-    <height>700</height>
+    <width>1360</width>
+    <height>720</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,486 +16,569 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QTabWidget" name="tabWidget">
-      <property name="currentIndex">
-       <number>0</number>
-      </property>
-      <widget class="QWidget" name="employeesTab">
-       <attribute name="title">
-        <string>Employees</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_2">
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QHBoxLayout" name="topBarLayout">
+      <item>
+       <spacer name="topBarSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="refreshBtn">
+        <property name="text">
+         <string>Refresh</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="mainContentLayout" stretch="3,1">
+      <item>
+       <widget class="QTabWidget" name="tabWidget">
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <widget class="QWidget" name="employeesTab">
+         <attribute name="title">
+          <string>Employees</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
-           <widget class="QPushButton" name="addEmployeeBtn">
-            <property name="text">
-             <string>Add Employee</string>
-            </property>
-           </widget>
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QPushButton" name="addEmployeeBtn">
+              <property name="text">
+               <string>Add Employee</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="editEmployeeBtn">
+              <property name="text">
+               <string>Edit Employee</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="deleteEmployeeBtn">
+              <property name="text">
+               <string>Delete Employee</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
           </item>
           <item>
-           <widget class="QPushButton" name="editEmployeeBtn">
-            <property name="text">
-             <string>Edit Employee</string>
+           <widget class="QTableWidget" name="employeesTable">
+            <property name="columnCount">
+             <number>8</number>
             </property>
+            <attribute name="horizontalHeaderVisible">
+             <bool>true</bool>
+            </attribute>
+            <attribute name="horizontalHeaderStretchLastSection">
+             <bool>true</bool>
+            </attribute>
+            <column>
+             <property name="text">
+              <string>ID</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Name</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Role Type</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Designation</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Team</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Game Knowledge</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Uniform Size</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Issued Uniforms</string>
+             </property>
+            </column>
            </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="deleteEmployeeBtn">
-            <property name="text">
-             <string>Delete Employee</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="refreshEmployeesBtn">
-            <property name="text">
-             <string>Refresh</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
           </item>
          </layout>
-        </item>
-        <item>
-         <widget class="QTableWidget" name="employeesTable">
-          <property name="columnCount">
-           <number>7</number>
-          </property>
-          <attribute name="horizontalHeaderStretchLastSection">
-           <bool>false</bool>
-          </attribute>
-          <column>
-           <property name="text">
-            <string>ID</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Name</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Role Type</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Designation</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Team</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Uniform Size</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Issued Uniforms</string>
-           </property>
-          </column>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="uniformsTab">
-       <attribute name="title">
-        <string>Uniforms</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_3">
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
+        </widget>
+        <widget class="QWidget" name="uniformsTab">
+         <attribute name="title">
+          <string>Uniforms</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
-           <widget class="QPushButton" name="addUniformBtn">
-            <property name="text">
-             <string>Add Uniform</string>
-            </property>
-           </widget>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <widget class="QPushButton" name="addUniformBtn">
+              <property name="text">
+               <string>Add Uniform</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="editUniformBtn">
+              <property name="text">
+               <string>Edit Uniform</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="deleteUniformBtn">
+              <property name="text">
+               <string>Delete Uniform</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
           </item>
           <item>
-           <widget class="QPushButton" name="editUniformBtn">
-            <property name="text">
-             <string>Edit Uniform</string>
+           <widget class="QTableWidget" name="uniformsTable">
+            <property name="columnCount">
+             <number>8</number>
             </property>
+            <attribute name="horizontalHeaderVisible">
+             <bool>true</bool>
+            </attribute>
+            <attribute name="horizontalHeaderStretchLastSection">
+             <bool>true</bool>
+            </attribute>
+            <column>
+             <property name="text">
+              <string>ID</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Type</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Team / Dept</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Size</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Total Stock</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Extra Available</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Color</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Description</string>
+             </property>
+            </column>
            </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="deleteUniformBtn">
-            <property name="text">
-             <string>Delete Uniform</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="refreshUniformsBtn">
-            <property name="text">
-             <string>Refresh</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_2">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
           </item>
          </layout>
-        </item>
-        <item>
-         <widget class="QTableWidget" name="uniformsTable">
-          <property name="columnCount">
-           <number>7</number>
-          </property>
-          <attribute name="horizontalHeaderStretchLastSection">
-           <bool>false</bool>
-          </attribute>
-          <column>
-           <property name="text">
-            <string>ID</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Type</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Team</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Size</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Accessory</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Purchase Date</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Description</string>
-           </property>
-          </column>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="issuesTab">
-       <attribute name="title">
-        <string>Issue/Return</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_4">
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_3">
+        </widget>
+        <widget class="QWidget" name="issuesTab">
+         <attribute name="title">
+          <string>Issue/Return</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
           <item>
-           <widget class="QPushButton" name="issueUniformBtn">
-            <property name="text">
-             <string>Issue Uniform</string>
-            </property>
-           </widget>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <widget class="QPushButton" name="issueUniformBtn">
+              <property name="text">
+               <string>Issue Uniform</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="returnUniformBtn">
+              <property name="text">
+               <string>Return Uniform</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
           </item>
           <item>
-           <widget class="QPushButton" name="returnUniformBtn">
-            <property name="text">
-             <string>Return Uniform</string>
+           <widget class="QTableWidget" name="issuesTable">
+            <property name="columnCount">
+             <number>7</number>
             </property>
+            <attribute name="horizontalHeaderVisible">
+             <bool>true</bool>
+            </attribute>
+            <attribute name="horizontalHeaderStretchLastSection">
+             <bool>true</bool>
+            </attribute>
+            <column>
+             <property name="text">
+              <string>ID</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Employee</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Uniform Type</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Quantity</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Issue Date</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Return Date</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Status</string>
+             </property>
+            </column>
            </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="refreshIssuesBtn">
-            <property name="text">
-             <string>Refresh</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_3">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
           </item>
          </layout>
-        </item>
-        <item>
-         <widget class="QTableWidget" name="issuesTable">
-          <property name="columnCount">
-           <number>7</number>
-          </property>
-          <attribute name="horizontalHeaderStretchLastSection">
-           <bool>false</bool>
-          </attribute>
-          <column>
-           <property name="text">
-            <string>ID</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Employee</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Uniform Type</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Quantity</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Issue Date</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Return Date</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Status</string>
-           </property>
-          </column>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="teamsTab">
-       <attribute name="title">
-        <string>Teams &amp; Staffing</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_teams">
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_teams">
+        </widget>
+        <widget class="QWidget" name="teamsTab">
+         <attribute name="title">
+          <string>Teams &amp; Staffing</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_teams">
           <item>
-           <widget class="QPushButton" name="reassignStaffBtn">
+           <layout class="QHBoxLayout" name="horizontalLayout_teams">
+            <item>
+             <widget class="QPushButton" name="reassignStaffBtn">
+              <property name="text">
+               <string>Reassign Employee (Uniform &amp; Game Checked)</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="autoBalanceBtn">
+              <property name="text">
+               <string>Auto-Balance Staff</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_teams">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QLabel" name="teamsTableLabel">
             <property name="text">
-             <string>Reassign Employee (Uniform-Checked)</string>
+             <string>&lt;b&gt;15 Teams Overview (4 Game Tables per Team | Max 7 Staff per 8h Shift)&lt;/b&gt;</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="autoBalanceBtn">
+           <widget class="QTableWidget" name="teamsTable">
+            <property name="columnCount">
+             <number>8</number>
+            </property>
+            <attribute name="horizontalHeaderVisible">
+             <bool>true</bool>
+            </attribute>
+            <attribute name="horizontalHeaderStretchLastSection">
+             <bool>true</bool>
+            </attribute>
+            <column><property name="text"><string>ID</string></property></column>
+            <column><property name="text"><string>Team Name</string></property></column>
+            <column><property name="text"><string>Team Type</string></property></column>
+            <column><property name="text"><string>Uniform Type</string></property></column>
+            <column><property name="text"><string>Current Staff</string></property></column>
+            <column><property name="text"><string>Target Staff</string></property></column>
+            <column><property name="text"><string>Staffing Status</string></property></column>
+            <column><property name="text"><string>Table Games (Tables 1-4)</string></property></column>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="teamMembersLabel">
             <property name="text">
-             <string>Auto-Balance Staff</string>
+             <string>&lt;b&gt;Selected Team Members&lt;/b&gt;</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="refreshTeamsBtn">
-            <property name="text">
-             <string>Refresh Teams</string>
+           <widget class="QTableWidget" name="teamMembersTable">
+            <property name="columnCount">
+             <number>6</number>
             </property>
+            <attribute name="horizontalHeaderVisible">
+             <bool>true</bool>
+            </attribute>
+            <attribute name="horizontalHeaderStretchLastSection">
+             <bool>true</bool>
+            </attribute>
+            <column><property name="text"><string>ID</string></property></column>
+            <column><property name="text"><string>Name</string></property></column>
+            <column><property name="text"><string>Role Type</string></property></column>
+            <column><property name="text"><string>Game Knowledge</string></property></column>
+            <column><property name="text"><string>Uniform Size</string></property></column>
+            <column><property name="text"><string>Issued Uniforms</string></property></column>
            </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_teams">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
           </item>
          </layout>
-        </item>
-        <item>
-         <widget class="QLabel" name="teamsTableLabel">
-          <property name="text">
-           <string>&lt;b&gt;Teams Overview (4 Tables per Team)&lt;/b&gt;</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QTableWidget" name="teamsTable">
-          <property name="columnCount">
-           <number>8</number>
-          </property>
-          <column><property name="text"><string>ID</string></property></column>
-          <column><property name="text"><string>Team Name</string></property></column>
-          <column><property name="text"><string>Team Type</string></property></column>
-          <column><property name="text"><string>Uniform Type</string></property></column>
-          <column><property name="text"><string>Current Staff</string></property></column>
-          <column><property name="text"><string>Target Staff</string></property></column>
-          <column><property name="text"><string>Staffing Status</string></property></column>
-          <column><property name="text"><string>Assigned Tables</string></property></column>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="teamMembersLabel">
-          <property name="text">
-           <string>&lt;b&gt;Selected Team Members&lt;/b&gt;</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QTableWidget" name="teamMembersTable">
-          <property name="columnCount">
-           <number>5</number>
-          </property>
-          <column><property name="text"><string>ID</string></property></column>
-          <column><property name="text"><string>Name</string></property></column>
-          <column><property name="text"><string>Designation</string></property></column>
-          <column><property name="text"><string>Uniform Size</string></property></column>
-          <column><property name="text"><string>Issued Uniforms</string></property></column>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="rotationsTab">
-       <attribute name="title">
-        <string>Shift &amp; Table Rotation</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_rotations">
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_rotations">
+        </widget>
+        <widget class="QWidget" name="rotationsTab">
+         <attribute name="title">
+          <string>Shift &amp; Table Rotation</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_rotations">
           <item>
-           <widget class="QLabel" name="rotTeamLabel">
+           <layout class="QHBoxLayout" name="horizontalLayout_rotations">
+            <item>
+             <widget class="QLabel" name="rotTeamLabel">
+              <property name="text">
+               <string>Team:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="rotationTeamCombo">
+              <property name="minimumWidth">
+               <number>150</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="rotDateLabel">
+              <property name="text">
+               <string>Date:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDateEdit" name="rotationDateEdit">
+              <property name="calendarPopup">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="rotStartLabel">
+              <property name="text">
+               <string>Start Time:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QTimeEdit" name="rotationStartTimeEdit"/>
+            </item>
+            <item>
+             <widget class="QLabel" name="rotSlotLabel">
+              <property name="text">
+               <string>Rotation Type:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="rotationSlotCombo">
+              <item><property name="text"><string>30 Mins</string></property></item>
+              <item><property name="text"><string>40 Mins</string></property></item>
+              <item><property name="text"><string>20 Mins (Dire)</string></property></item>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="generateRotationBtn">
+              <property name="text">
+               <string>Generate / Adjust Rotation</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_rot">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QLabel" name="rotationStatusLabel">
             <property name="text">
-             <string>Team:</string>
+             <string>&lt;i&gt;Select a team and click 'Generate / Adjust Rotation' to calculate the 8-hour shift 4-table cycle with 30-min breaks.&lt;/i&gt;</string>
             </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="rotationTeamCombo">
-            <property name="minimumWidth">
-             <number>150</number>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="rotDateLabel">
-            <property name="text">
-             <string>Date:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QDateEdit" name="rotationDateEdit">
-            <property name="calendarPopup">
+            <property name="wordWrap">
              <bool>true</bool>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="rotStartLabel">
-            <property name="text">
-             <string>Start Time:</string>
+           <widget class="QTableWidget" name="rotationTable">
+            <property name="columnCount">
+             <number>6</number>
             </property>
+            <attribute name="horizontalHeaderVisible">
+             <bool>true</bool>
+            </attribute>
+            <attribute name="horizontalHeaderMinimumSectionSize">
+             <number>110</number>
+            </attribute>
+            <attribute name="horizontalHeaderStretchLastSection">
+             <bool>true</bool>
+            </attribute>
+            <column><property name="text"><string>Time Slot</string></property></column>
+            <column><property name="text"><string>Table 1</string></property></column>
+            <column><property name="text"><string>Table 2</string></property></column>
+            <column><property name="text"><string>Table 3</string></property></column>
+            <column><property name="text"><string>Table 4</string></property></column>
+            <column><property name="text"><string>Break</string></property></column>
            </widget>
-          </item>
-          <item>
-           <widget class="QTimeEdit" name="rotationStartTimeEdit"/>
-          </item>
-          <item>
-           <widget class="QLabel" name="rotSlotLabel">
-            <property name="text">
-             <string>Rotation Type:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="rotationSlotCombo">
-            <item><property name="text"><string>30 Mins</string></property></item>
-            <item><property name="text"><string>40 Mins</string></property></item>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="generateRotationBtn">
-            <property name="text">
-             <string>Generate / Adjust Rotation</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_rot">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
           </item>
          </layout>
-        </item>
-        <item>
-         <widget class="QLabel" name="rotationStatusLabel">
-          <property name="text">
-           <string>&lt;i&gt;Select a team and click 'Generate / Adjust Rotation' to calculate the 8-hour shift 4-table cycle with 30-min breaks.&lt;/i&gt;</string>
-          </property>
-          <property name="wordWrap">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QTableWidget" name="rotationTable">
-          <property name="columnCount">
-           <number>6</number>
-          </property>
-          <column><property name="text"><string>Time Slot</string></property></column>
-          <column><property name="text"><string>Table 1</string></property></column>
-          <column><property name="text"><string>Table 2</string></property></column>
-          <column><property name="text"><string>Table 3</string></property></column>
-          <column><property name="text"><string>Table 4</string></property></column>
-          <column><property name="text"><string>Table 5 (30-Min Break)</string></property></column>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </widget>
+        </widget>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="recentChangesGroupBox">
+        <property name="minimumSize">
+         <size>
+          <width>300</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>360</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="title">
+         <string>Recent Changes</string>
+        </property>
+        <layout class="QVBoxLayout" name="sidebarLayout">
+         <item>
+          <widget class="QListWidget" name="recentChangesList">
+           <property name="alternatingRowColors">
+            <bool>true</bool>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+           <property name="spacing">
+            <number>4</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="clearChangesBtn">
+           <property name="text">
+            <string>Clear Recent Changes</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>

@@ -7,11 +7,32 @@ EmployeeDialog::EmployeeDialog(QWidget *parent)
 {
     ui->setupUi(this);
     this->setWindowTitle("Employee Information");
+
+    connect(ui->chkBlackjack, &QCheckBox::toggled, this, &EmployeeDialog::updateGameKnowledgeFromChecks);
+    connect(ui->chkRoulette,  &QCheckBox::toggled, this, &EmployeeDialog::updateGameKnowledgeFromChecks);
+    connect(ui->chkBaccarat,  &QCheckBox::toggled, this, &EmployeeDialog::updateGameKnowledgeFromChecks);
+    connect(ui->chkPoker,     &QCheckBox::toggled, this, &EmployeeDialog::updateGameKnowledgeFromChecks);
+    connect(ui->chkCraps,     &QCheckBox::toggled, this, &EmployeeDialog::updateGameKnowledgeFromChecks);
+    connect(ui->chkGameShow,  &QCheckBox::toggled, this, &EmployeeDialog::updateGameKnowledgeFromChecks);
+
+    updateGameKnowledgeFromChecks();
 }
 
 EmployeeDialog::~EmployeeDialog()
 {
     delete ui;
+}
+
+void EmployeeDialog::updateGameKnowledgeFromChecks()
+{
+    QStringList selected;
+    if (ui->chkBlackjack->isChecked()) selected << "Blackjack";
+    if (ui->chkRoulette->isChecked())  selected << "Roulette";
+    if (ui->chkBaccarat->isChecked())  selected << "Baccarat";
+    if (ui->chkPoker->isChecked())     selected << "Poker";
+    if (ui->chkCraps->isChecked())     selected << "Craps";
+    if (ui->chkGameShow->isChecked())  selected << "Game Show";
+    ui->gameKnowledgeEdit->setText(selected.join(", "));
 }
 
 Employee EmployeeDialog::getEmployee() const
@@ -56,6 +77,30 @@ void EmployeeDialog::setEmployee(const Employee& employee)
     } else {
         ui->roleCombo->setCurrentText(role.isEmpty() ? "Dealer" : role);
     }
+
+    QString games = employee.getGameKnowledge();
+    ui->chkBlackjack->blockSignals(true);
+    ui->chkRoulette->blockSignals(true);
+    ui->chkBaccarat->blockSignals(true);
+    ui->chkPoker->blockSignals(true);
+    ui->chkCraps->blockSignals(true);
+    ui->chkGameShow->blockSignals(true);
+
+    ui->chkBlackjack->setChecked(games.contains("Blackjack", Qt::CaseInsensitive));
+    ui->chkRoulette->setChecked(games.contains("Roulette", Qt::CaseInsensitive));
+    ui->chkBaccarat->setChecked(games.contains("Baccarat", Qt::CaseInsensitive));
+    ui->chkPoker->setChecked(games.contains("Poker", Qt::CaseInsensitive));
+    ui->chkCraps->setChecked(games.contains("Craps", Qt::CaseInsensitive));
+    ui->chkGameShow->setChecked(games.contains("Game Show", Qt::CaseInsensitive));
+
+    ui->chkBlackjack->blockSignals(false);
+    ui->chkRoulette->blockSignals(false);
+    ui->chkBaccarat->blockSignals(false);
+    ui->chkPoker->blockSignals(false);
+    ui->chkCraps->blockSignals(false);
+    ui->chkGameShow->blockSignals(false);
+
+    ui->gameKnowledgeEdit->setText(games.isEmpty() ? "Blackjack, Roulette" : games);
 }
 
 void EmployeeDialog::on_okBtn_clicked()
@@ -67,6 +112,7 @@ void EmployeeDialog::on_okBtn_clicked()
     m_employee.setEmail(ui->emailEdit->text().trimmed());
     m_employee.setPhone(ui->phoneEdit->text().trimmed());
     m_employee.setUniformSize(ui->uniformSizeCombo->currentText());
+    m_employee.setGameKnowledge(ui->gameKnowledgeEdit->text().trimmed());
     accept();
 }
 

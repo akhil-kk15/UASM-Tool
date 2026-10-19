@@ -13,8 +13,11 @@ ReassignDialog::ReassignDialog(DatabaseManager* dbManager, QWidget *parent)
     // Populate employees
     QList<Employee> employees = m_dbManager->getAllEmployees();
     for (const Employee& emp : employees) {
+        QString games = emp.getGameKnowledge().isEmpty() ? "Standard" : emp.getGameKnowledge();
         ui->employeeCombo->addItem(
-            QString("%1 (Role: %2 | Current: %3 | Size: %4)").arg(emp.getName(), emp.getRoleType(), emp.getDepartment(), emp.getUniformSize()),
+            QString("[%1] %2 (Role: %3 | Team: %4 | Size: %5 | Games: %6)")
+                .arg(emp.getId())
+                .arg(emp.getName(), emp.getRoleType(), emp.getDepartment(), emp.getUniformSize(), games),
             emp.getId()
         );
     }
@@ -23,7 +26,8 @@ ReassignDialog::ReassignDialog(DatabaseManager* dbManager, QWidget *parent)
     QList<Team> teams = m_dbManager->getAllTeams();
     for (const Team& team : teams) {
         ui->targetTeamCombo->addItem(
-            QString("%1 [%2]").arg(team.getName(), team.getTeamType()),
+            QString("%1 [%2 | Games: %3]")
+                .arg(team.getName(), team.getTeamType(), team.getUniqueGames().join(", ")),
             team.getName()
         );
     }
@@ -55,9 +59,11 @@ void ReassignDialog::onEmployeeChanged(int index)
     if (empId <= 0) return;
 
     Employee emp = m_dbManager->getEmployee(empId);
+    QString games = emp.getGameKnowledge().isEmpty() ? "N/A" : emp.getGameKnowledge();
     ui->currentDetailsLabel->setText(
-        QString("<b>%1</b> | Role: <b>%2</b> | Team: <b>%3</b> | Uniform Size: <b>%4</b>")
-        .arg(emp.getName(), emp.getRoleType(), emp.getDepartment(), emp.getUniformSize())
+        QString("<b>#%1 - %2</b> | Role: <b>%3</b> | Team: <b>%4</b> | Size: <b>%5</b><br>Game Knowledge: <b>%6</b>")
+        .arg(emp.getId())
+        .arg(emp.getName(), emp.getRoleType(), emp.getDepartment(), emp.getUniformSize(), games)
     );
 
     updateStockStatus();
@@ -80,7 +86,7 @@ void ReassignDialog::updateStockStatus()
     Team targetTeam = m_dbManager->getTeamByName(targetTeamName);
 
     // 1. Role compatibility check
-    if (!targetTeam.acceptsEmployee(emp)) {
+    if (!targetTeam.hasCompatibleRole(emp)) {
         QString note = targetTeam.isGameShowTeam()
             ? "Game Show Host teams require role 'Game Show Host' or 'Both'."
             : "Standard Dealer teams require role 'Dealer' or 'Both'.";
@@ -92,19 +98,32 @@ void ReassignDialog::updateStockStatus()
         return;
     }
 
+    // 2. Game Knowledge compatibility check
+    if (!targetTeam.hasRequiredGameKnowledge(emp)) {
+        QStringList missing = targetTeam.getMissingGames(emp);
+        ui->stockStatusLabel->setText(
+            QString("<font color='red'><b>Missing Game Knowledge:</b> %1 knows [%2], but %3 requires [%4].<br>"
+                    "<i>Missing games: %5</i></font>")
+            .arg(emp.getName(), emp.getGameKnowledge(), targetTeam.getName(),
+                 targetTeam.getUniqueGames().join(", "), missing.join(", "))
+        );
+        ui->reassignBtn->setEnabled(false);
+        return;
+    }
+
     ui->reassignBtn->setEnabled(true);
 
-    // 2. Uniform stock check
+    // 3. Uniform stock check
     int count = m_dbManager->getAvailableUniformCountForTeam(targetTeamName, targetTeam.getUniformType(), size);
     if (count > 0) {
         ui->stockStatusLabel->setText(
-            QString("<font color='green'><b>Available (%1 in stock)</b></font> - Uniform matches Size %2")
+            QString("<font color='green'><b>Compatible Role &amp; Game Knowledge | Uniform Available (%1 in stock, Size %2)</b></font>")
             .arg(count).arg(size)
         );
     } else {
         ui->stockStatusLabel->setText(
             QString("<font color='red'><b>Out of Stock in Size %1!</b></font><br>"
-                    "<i>System will automatically search and redirect to a compatible alternative team with available stock.</i>")
+                    "<i>System will automatically search and redirect to a compatible alternative team (matching role &amp; game knowledge) with available stock.</i>")
             .arg(size)
         );
     }
@@ -129,17 +148,6 @@ void ReassignDialog::on_reassignBtn_clicked()
     m_result = m_scheduler.reassignEmployee(empId, targetTeam, reason);
 
     if (m_result.success) {
-        if (m_result.fallbackUsed) {
-            QMessageBox::warning(
-                this, "Uniform Shortage - Reassigned to Alternative Team",
-                m_result.message
-            );
-        } else {
-            QMessageBox::information(
-                this, "Reassignment Successful",
-                m_result.message
-            );
-        }
         accept();
     } else {
         QMessageBox::critical(

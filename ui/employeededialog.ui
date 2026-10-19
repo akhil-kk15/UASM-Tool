@@ -2,12 +2,12 @@
 <ui version="4.0">
  <class>EmployeeDialog</class>
  <widget class="QDialog" name="EmployeeDialog">
-  <property name="geometry">
+   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>350</height>
+    <width>460</width>
+    <height>440</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -63,47 +63,117 @@
       </widget>
      </item>
      <item row="3" column="0">
+      <widget class="QLabel" name="gameKnowledgeLabel">
+       <property name="text">
+        <string>Game Knowledge:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <layout class="QVBoxLayout" name="gameKnowledgeLayout">
+       <item>
+        <layout class="QGridLayout" name="gamesGridLayout">
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="chkBlackjack">
+           <property name="text">
+            <string>Blackjack</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QCheckBox" name="chkRoulette">
+           <property name="text">
+            <string>Roulette</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QCheckBox" name="chkBaccarat">
+           <property name="text">
+            <string>Baccarat</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QCheckBox" name="chkPoker">
+           <property name="text">
+            <string>Poker</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QCheckBox" name="chkCraps">
+           <property name="text">
+            <string>Craps</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QCheckBox" name="chkGameShow">
+           <property name="text">
+            <string>Game Show</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="gameKnowledgeEdit">
+         <property name="placeholderText">
+          <string>Blackjack, Roulette, Baccarat...</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="4" column="0">
       <widget class="QLabel" name="label_3">
        <property name="text">
         <string>Team:</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="4" column="1">
       <widget class="QComboBox" name="teamCombo">
        <property name="editable">
         <bool>true</bool>
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
+     <item row="5" column="0">
       <widget class="QLabel" name="label_4">
        <property name="text">
         <string>Email:</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="5" column="1">
       <widget class="QLineEdit" name="emailEdit"/>
      </item>
-     <item row="5" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="label_5">
        <property name="text">
         <string>Phone:</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="6" column="1">
       <widget class="QLineEdit" name="phoneEdit"/>
      </item>
-     <item row="6" column="0">
+     <item row="7" column="0">
       <widget class="QLabel" name="label_6">
        <property name="text">
         <string>Uniform Size:</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="7" column="1">
       <widget class="QComboBox" name="uniformSizeCombo">
        <item>
         <property name="text">
@@ -137,14 +207,14 @@
        </item>
       </widget>
      </item>
-     <item row="7" column="0">
+     <item row="8" column="0">
       <widget class="QLabel" name="label_7">
        <property name="text">
         <string>Joining Date:</string>
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
+     <item row="8" column="1">
       <widget class="QDateEdit" name="joiningDateEdit">
        <property name="calendarPopup">
         <bool>true</bool>

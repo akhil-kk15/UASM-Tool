@@ -9,7 +9,7 @@ class Team
 {
 public:
     enum StaffingStatus {
-        CriticallyUnderstaffed, // Less than 4 (cannot cover 4 tables)
+        CriticallyUnderstaffed, // Less than minStaff
         Understaffed,           // Less than targetStaff
         Optimal,                // Equal to targetStaff
         Overstaffed             // Greater than targetStaff
@@ -17,8 +17,9 @@ public:
 
     Team();
     Team(int id, const QString& name, const QString& uniformType = "Standard",
-         int targetStaff = 5, int minStaff = 4, int maxStaff = 7,
-         const QString& teamType = "Standard");
+         int targetStaff = 7, int minStaff = 5, int maxStaff = 7,
+         const QString& teamType = "Standard",
+         const QString& tableGames = "");
 
     // Getters
     int getId() const;
@@ -30,8 +31,14 @@ public:
     int getTableCount() const;
     QStringList getAssignedTables() const;
     QString getTeamType() const; // "Standard", "Game Show Host"
+    QString getTableGames() const;
+    QStringList getTableGamesList() const;
+    QStringList getUniqueGames() const;
 
     bool isGameShowTeam() const;
+    bool hasCompatibleRole(const Employee& emp) const;
+    bool hasRequiredGameKnowledge(const Employee& emp) const;
+    QStringList getMissingGames(const Employee& emp) const;
     bool acceptsEmployee(const Employee& emp) const;
 
     // Setters
@@ -42,6 +49,7 @@ public:
     void setTargetStaff(int targetStaff);
     void setMaxStaff(int maxStaff);
     void setTeamType(const QString& teamType);
+    void setTableGames(const QString& tableGames);
 
     // Staffing analysis
     StaffingStatus evaluateStaffing(int currentStaffCount) const;
@@ -58,6 +66,7 @@ private:
     int m_maxStaff;
     int m_tableCount; // Fixed at 4 tables per team
     QString m_teamType; // "Standard", "Game Show Host"
+    QString m_tableGames; // Comma-separated games for the 4 tables
 };
 
 #endif // TEAM_H

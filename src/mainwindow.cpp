@@ -6,6 +6,8 @@
 #include "reassigndialog.h"
 #include <QMessageBox>
 #include <QTableWidgetItem>
+#include <QListWidgetItem>
+#include <QHeaderView>
 #include <QDate>
 #include <QTime>
 #include <QBrush>
@@ -34,11 +36,39 @@ MainWindow::MainWindow(QWidget *parent)
     if (ui->rotationTeamCombo->count() > 0) {
         on_generateRotationBtn_clicked();
     }
+
+    logRecentChange(QString("Loaded %1 employees across %2 teams (5-digit IDs, max 7 staff/shift).")
+                    .arg(m_db.getAllEmployees().size())
+                    .arg(m_db.getAllTeams().size()));
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::logRecentChange(const QString& message, bool isError)
+{
+    if (!ui->recentChangesList) return;
+
+    QString timestamp = QTime::currentTime().toString("hh:mm:ss");
+    QListWidgetItem* item = new QListWidgetItem(QString("[%1] %2").arg(timestamp, message));
+    if (isError) {
+        item->setBackground(QColor("#f8d7da"));
+        item->setForeground(QColor("#721c24"));
+    } else if (message.contains("->") || message.contains("Auto-Balance")) {
+        item->setBackground(QColor("#d4edda"));
+        item->setForeground(QColor("#155724"));
+    }
+    ui->recentChangesList->insertItem(0, item);
+    ui->recentChangesList->scrollToTop();
+    ui->statusbar->showMessage(message, 4000);
+}
+
+void MainWindow::on_clearChangesBtn_clicked()
+{
+    ui->recentChangesList->clear();
+    ui->statusbar->showMessage("Cleared recent changes log", 2000);
 }
 
 void MainWindow::initializeDatabase()
@@ -52,10 +82,12 @@ void MainWindow::initializeDatabase()
 void MainWindow::loadEmployeesTable()
 {
     ui->employeesTable->setRowCount(0);
-    ui->employeesTable->setColumnCount(7);
+    ui->employeesTable->setColumnCount(8);
     QStringList headers;
-    headers << "ID" << "Name" << "Role Type" << "Designation" << "Team" << "Uniform Size" << "Issued Uniforms";
+    headers << "ID" << "Name" << "Role Type" << "Designation" << "Team" << "Game Knowledge" << "Uniform Size" << "Issued Uniforms";
     ui->employeesTable->setHorizontalHeaderLabels(headers);
+    ui->employeesTable->horizontalHeader()->setVisible(true);
+    ui->employeesTable->horizontalHeader()->setStretchLastSection(true);
     
     QList<Employee> employees = m_db.getAllEmployees();
     
@@ -66,7 +98,8 @@ void MainWindow::loadEmployeesTable()
         ui->employeesTable->setItem(i, 2, new QTableWidgetItem(employees[i].getRoleType()));
         ui->employeesTable->setItem(i, 3, new QTableWidgetItem(employees[i].getDesignation()));
         ui->employeesTable->setItem(i, 4, new QTableWidgetItem(employees[i].getDepartment()));
-        ui->employeesTable->setItem(i, 5, new QTableWidgetItem(employees[i].getUniformSize()));
+        ui->employeesTable->setItem(i, 5, new QTableWidgetItem(employees[i].getGameKnowledge()));
+        ui->employeesTable->setItem(i, 6, new QTableWidgetItem(employees[i].getUniformSize()));
         
         // Issued uniforms count
         QList<UniformIssue> issues = m_db.getIssueHistory(employees[i].getId());
@@ -76,8 +109,9 @@ void MainWindow::loadEmployeesTable()
                 issuedCount += issue.getQuantity();
             }
         }
-        ui->employeesTable->setItem(i, 6, new QTableWidgetItem(QString::number(issuedCount)));
+        ui->employeesTable->setItem(i, 7, new QTableWidgetItem(QString::number(issuedCount)));
     }
+    ui->employeesTable->resizeColumnsToContents();
 }
 
 void MainWindow::loadUniformsTable()
@@ -87,6 +121,8 @@ void MainWindow::loadUniformsTable()
     QStringList headers;
     headers << "ID" << "Type" << "Team / Dept" << "Size" << "Total Stock" << "Extra Available" << "Color" << "Description";
     ui->uniformsTable->setHorizontalHeaderLabels(headers);
+    ui->uniformsTable->horizontalHeader()->setVisible(true);
+    ui->uniformsTable->horizontalHeader()->setStretchLastSection(true);
     
     QList<Uniform> uniforms = m_db.getAllUniforms();
     
@@ -111,11 +147,14 @@ void MainWindow::loadUniformsTable()
         ui->uniformsTable->setItem(i, 6, new QTableWidgetItem(uniforms[i].getColor()));
         ui->uniformsTable->setItem(i, 7, new QTableWidgetItem(uniforms[i].getDescription()));
     }
+    ui->uniformsTable->resizeColumnsToContents();
 }
 
 void MainWindow::loadIssuesTable()
 {
     ui->issuesTable->setRowCount(0);
+    ui->issuesTable->horizontalHeader()->setVisible(true);
+    ui->issuesTable->horizontalHeader()->setStretchLastSection(true);
     QList<UniformIssue> issues = m_db.getAllIssues();
     
     for (int i = 0; i < issues.size(); ++i) {
@@ -124,22 +163,26 @@ void MainWindow::loadIssuesTable()
         
         ui->issuesTable->insertRow(i);
         ui->issuesTable->setItem(i, 0, new QTableWidgetItem(QString::number(issues[i].getId())));
-        ui->issuesTable->setItem(i, 1, new QTableWidgetItem(emp.getName()));
+        ui->issuesTable->setItem(i, 1, new QTableWidgetItem(QString("[#%1] %2").arg(emp.getId()).arg(emp.getName())));
         ui->issuesTable->setItem(i, 2, new QTableWidgetItem(uniform.getType()));
         ui->issuesTable->setItem(i, 3, new QTableWidgetItem(QString::number(issues[i].getQuantity())));
         ui->issuesTable->setItem(i, 4, new QTableWidgetItem(issues[i].getIssueDate().toString("yyyy-MM-dd")));
         ui->issuesTable->setItem(i, 5, new QTableWidgetItem(issues[i].getReturnDate().toString("yyyy-MM-dd")));
         ui->issuesTable->setItem(i, 6, new QTableWidgetItem(issues[i].getStatus()));
     }
+    ui->issuesTable->resizeColumnsToContents();
 }
 
 void MainWindow::loadTeamsTable()
 {
+    int previousRow = ui->teamsTable->currentRow();
     ui->teamsTable->setRowCount(0);
     ui->teamsTable->setColumnCount(8);
     QStringList headers;
-    headers << "ID" << "Team Name" << "Team Type" << "Uniform Type" << "Current Staff" << "Target Staff" << "Staffing Status" << "Assigned Tables";
+    headers << "ID" << "Team Name" << "Team Type" << "Uniform Type" << "Current Staff" << "Target Staff" << "Staffing Status" << "Table Games (Tables 1-4)";
     ui->teamsTable->setHorizontalHeaderLabels(headers);
+    ui->teamsTable->horizontalHeader()->setVisible(true);
+    ui->teamsTable->horizontalHeader()->setStretchLastSection(true);
 
     QList<Team> teams = m_db.getAllTeams();
 
@@ -168,38 +211,44 @@ void MainWindow::loadTeamsTable()
             statusItem->setForeground(QColor("#004085"));
         }
         ui->teamsTable->setItem(i, 6, statusItem);
-        ui->teamsTable->setItem(i, 7, new QTableWidgetItem("4 Tables (Tables 1 - 4)"));
+        ui->teamsTable->setItem(i, 7, new QTableWidgetItem(teams[i].getTableGames()));
     }
+    ui->teamsTable->resizeColumnsToContents();
 
     if (teams.size() > 0) {
-        ui->teamsTable->selectRow(0);
-        loadTeamMembersTable(teams[0].getName());
+        int rowToSelect = (previousRow >= 0 && previousRow < teams.size()) ? previousRow : 0;
+        ui->teamsTable->selectRow(rowToSelect);
+        loadTeamMembersTable(teams[rowToSelect].getName());
     }
 }
 
 void MainWindow::loadTeamMembersTable(const QString& teamName)
 {
     ui->teamMembersTable->setRowCount(0);
-    ui->teamMembersTable->setColumnCount(5);
+    ui->teamMembersTable->setColumnCount(6);
     QStringList headers;
-    headers << "ID" << "Name" << "Designation" << "Uniform Size" << "Issued Uniforms";
+    headers << "ID" << "Name" << "Role Type" << "Game Knowledge" << "Uniform Size" << "Issued Uniforms";
     ui->teamMembersTable->setHorizontalHeaderLabels(headers);
+    ui->teamMembersTable->horizontalHeader()->setVisible(true);
+    ui->teamMembersTable->horizontalHeader()->setStretchLastSection(true);
 
     QList<Employee> members = m_db.getEmployeesByTeam(teamName);
     for (int i = 0; i < members.size(); ++i) {
         ui->teamMembersTable->insertRow(i);
         ui->teamMembersTable->setItem(i, 0, new QTableWidgetItem(QString::number(members[i].getId())));
         ui->teamMembersTable->setItem(i, 1, new QTableWidgetItem(members[i].getName()));
-        ui->teamMembersTable->setItem(i, 2, new QTableWidgetItem(members[i].getDesignation()));
-        ui->teamMembersTable->setItem(i, 3, new QTableWidgetItem(members[i].getUniformSize()));
+        ui->teamMembersTable->setItem(i, 2, new QTableWidgetItem(members[i].getRoleType()));
+        ui->teamMembersTable->setItem(i, 3, new QTableWidgetItem(members[i].getGameKnowledge()));
+        ui->teamMembersTable->setItem(i, 4, new QTableWidgetItem(members[i].getUniformSize()));
 
         QList<UniformIssue> issues = m_db.getIssueHistory(members[i].getId());
         int count = 0;
         for (const auto& issue : issues) {
             if (issue.getStatus() == "Issued") count += issue.getQuantity();
         }
-        ui->teamMembersTable->setItem(i, 4, new QTableWidgetItem(QString::number(count)));
+        ui->teamMembersTable->setItem(i, 5, new QTableWidgetItem(QString::number(count)));
     }
+    ui->teamMembersTable->resizeColumnsToContents();
 }
 
 void MainWindow::on_teamsTable_itemSelectionChanged()
@@ -232,7 +281,10 @@ void MainWindow::on_generateRotationBtn_clicked()
     int slotMinutes = 30;
     int numSlots = 20;
 
-    if (comboText.contains("40") || comboIndex == 1) {
+    if (comboText.contains("20") || comboIndex == 2) {
+        slotMinutes = 20;
+        numSlots = 20;
+    } else if (comboText.contains("40") || comboIndex == 1) {
         slotMinutes = 40;
         numSlots = 20;
     } else {
@@ -250,6 +302,19 @@ void MainWindow::on_generateRotationBtn_clicked()
 void MainWindow::on_rotationTeamCombo_currentIndexChanged(int index)
 {
     Q_UNUSED(index);
+    QString teamName = ui->rotationTeamCombo->currentText();
+    if (!teamName.isEmpty()) {
+        Team team = m_db.getTeamByName(teamName);
+        int memberCount = m_db.getTeamMemberCount(teamName);
+        int recMinutes = m_scheduler.recommendSlotMinutes(team, memberCount);
+        if (recMinutes == 20) {
+            ui->rotationSlotCombo->setCurrentIndex(2); // 20 Mins (Dire)
+        } else if (recMinutes == 40) {
+            ui->rotationSlotCombo->setCurrentIndex(1); // 40 Mins
+        } else {
+            ui->rotationSlotCombo->setCurrentIndex(0); // 30 Mins
+        }
+    }
     on_generateRotationBtn_clicked();
 }
 
@@ -257,13 +322,39 @@ void MainWindow::displayRotationSchedule(const ShiftSchedule& schedule)
 {
     ui->rotationTable->setRowCount(0);
     ui->rotationTable->setColumnCount(6);
+
+    QString g1 = schedule.tableGames.size() >= 1 ? schedule.tableGames[0] : "Blackjack";
+    QString g2 = schedule.tableGames.size() >= 2 ? schedule.tableGames[1] : "Blackjack";
+    QString g3 = schedule.tableGames.size() >= 3 ? schedule.tableGames[2] : "Blackjack";
+    QString g4 = schedule.tableGames.size() >= 4 ? schedule.tableGames[3] : "Blackjack";
+
     QStringList headers;
-    headers << "Time Slot" << "Table 1" << "Table 2" << "Table 3" << "Table 4" << "Break";
+    headers << "Time Slot"
+            << QString("Table 1 (%1)").arg(g1)
+            << QString("Table 2 (%1)").arg(g2)
+            << QString("Table 3 (%1)").arg(g3)
+            << QString("Table 4 (%1)").arg(g4)
+            << "Break";
     ui->rotationTable->setHorizontalHeaderLabels(headers);
+    for (int col = 0; col < headers.size(); ++col) {
+        QTableWidgetItem* hItem = ui->rotationTable->horizontalHeaderItem(col);
+        if (!hItem) {
+            hItem = new QTableWidgetItem(headers[col]);
+            ui->rotationTable->setHorizontalHeaderItem(col, hItem);
+        } else {
+            hItem->setText(headers[col]);
+        }
+    }
+    ui->rotationTable->horizontalHeader()->setVisible(true);
+    ui->rotationTable->horizontalHeader()->setMinimumSectionSize(110);
+    ui->rotationTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->rotationStatusLabel->setText(
-        QString("<b>Team: %1</b> | Shift: 8 Hours | Slot: %2 mins | Status: <b>%3</b>")
-        .arg(schedule.teamName).arg(schedule.slotMinutes).arg(schedule.statusNotes)
+        QString("<b>Team: %1</b> | Games: %2 | Shift: 8 Hours (Max 7 Staff) | Slot: %3 mins | Status: <b>%4</b>")
+        .arg(schedule.teamName)
+        .arg(schedule.tableGames.join(", "))
+        .arg(schedule.slotMinutes)
+        .arg(schedule.statusNotes)
     );
 
     for (int r = 0; r < schedule.rotationSlots.size(); ++r) {
@@ -301,8 +392,6 @@ void MainWindow::displayRotationSchedule(const ShiftSchedule& schedule)
         }
         ui->rotationTable->setItem(r, 5, breakItem);
     }
-
-    ui->rotationTable->resizeColumnsToContents();
 }
 
 void MainWindow::on_reassignStaffBtn_clicked()
@@ -316,39 +405,50 @@ void MainWindow::on_reassignStaffBtn_clicked()
 
         ReassignmentResult res = dialog.getResult();
         if (res.success) {
+            logRecentChange(res.message);
             int idx = ui->rotationTeamCombo->findText(res.assignedTeam);
             if (idx >= 0) {
                 ui->rotationTeamCombo->setCurrentIndex(idx);
             }
             on_generateRotationBtn_clicked();
+        } else if (!res.message.isEmpty()) {
+            logRecentChange(res.message, true);
         }
     }
 }
 
 void MainWindow::on_autoBalanceBtn_clicked()
 {
-    QList<Team> allTeams = m_db.getAllTeams();
     QStringList movesMade;
     QStringList shortages;
 
-    // Search for overstaffed and understaffed teams
+    // 1. Relocate any employees exceeding the 7-person shift limit to compatible teams
+    QList<ReassignmentResult> overflowMoves = m_scheduler.relocateOverflowStaff();
+    for (const ReassignmentResult& res : overflowMoves) {
+        if (res.success) {
+            movesMade << res.message;
+        } else {
+            shortages << res.message;
+        }
+    }
+
+    // 2. Balance any remaining understaffed teams (< 6 staff) from teams that have 7 staff
+    QList<Team> allTeams = m_db.getAllTeams();
     for (const Team& sourceTeam : allTeams) {
         int currentStaff = m_db.getTeamMemberCount(sourceTeam.getName());
-        if (sourceTeam.hasSurplusStaff(currentStaff)) {
+        if (currentStaff >= 7) {
             QList<Employee> members = m_db.getEmployeesByTeam(sourceTeam.getName());
-            int excess = currentStaff - sourceTeam.getTargetStaff();
-
-            for (int i = 0; i < excess && i < members.size(); ++i) {
+            for (int i = members.size() - 1; i >= 0 && currentStaff > 6; --i) {
                 Employee emp = members[i];
-
-                // Find an understaffed team
                 QString understaffedTarget = "";
+                int lowestStaff = 999;
+
                 for (const Team& targetTeam : allTeams) {
                     if (targetTeam.getName() != sourceTeam.getName()) {
                         int targetStaff = m_db.getTeamMemberCount(targetTeam.getName());
-                        if (targetTeam.needsStaff(targetStaff)) {
+                        if (targetStaff < 6 && targetStaff < lowestStaff && targetTeam.acceptsEmployee(emp)) {
+                            lowestStaff = targetStaff;
                             understaffedTarget = targetTeam.getName();
-                            break;
                         }
                     }
                 }
@@ -357,6 +457,7 @@ void MainWindow::on_autoBalanceBtn_clicked()
                     ReassignmentResult result = m_scheduler.reassignEmployee(emp.getId(), understaffedTarget, "Auto-balance staffing");
                     if (result.success) {
                         movesMade << result.message;
+                        currentStaff--;
                     } else {
                         shortages << result.message;
                     }
@@ -372,23 +473,41 @@ void MainWindow::on_autoBalanceBtn_clicked()
     on_generateRotationBtn_clicked();
 
     if (movesMade.isEmpty() && shortages.isEmpty()) {
-        QMessageBox::information(this, "Auto-Balance", "Teams are already balanced or no transfer candidates found.");
+        logRecentChange("Auto-Balance: All 15 teams are already balanced within the 7-staff shift limit.");
     } else {
-        QString report = "<b>Auto-Balance Results:</b><br><br>";
-        if (!movesMade.isEmpty()) {
-            report += "<b>Successful Reassignments:</b><br>• " + movesMade.join("<br>• ") + "<br><br>";
+        for (const QString& move : movesMade) {
+            logRecentChange(move, false);
         }
-        if (!shortages.isEmpty()) {
-            report += "<b>Uniform Shortages Encountered:</b><br>• " + shortages.join("<br>• ");
+        for (const QString& err : shortages) {
+            logRecentChange(err, true);
         }
-        QMessageBox::information(this, "Auto-Balance Report", report);
+        logRecentChange(QString("Auto-Balance complete: %1 staff reassigned across compatible teams.")
+                        .arg(movesMade.size()), false);
     }
 }
 
-void MainWindow::on_refreshTeamsBtn_clicked()
+void MainWindow::on_refreshBtn_clicked()
 {
+    QString currentRotTeam = ui->rotationTeamCombo->currentText();
+
+    loadEmployeesTable();
+    loadUniformsTable();
+    loadIssuesTable();
     loadTeamsTable();
-    QMessageBox::information(this, "Success", "Teams and staffing table refreshed!");
+
+    ui->rotationTeamCombo->blockSignals(true);
+    populateRotationTeamCombo();
+    int idx = ui->rotationTeamCombo->findText(currentRotTeam);
+    if (idx >= 0) {
+        ui->rotationTeamCombo->setCurrentIndex(idx);
+    }
+    ui->rotationTeamCombo->blockSignals(false);
+
+    if (ui->rotationTeamCombo->count() > 0) {
+        on_generateRotationBtn_clicked();
+    }
+
+    logRecentChange("Refreshed all tables, uniform inventory, and team rotation schedules.");
 }
 
 // Employee actions
@@ -403,12 +522,34 @@ void MainWindow::on_addEmployeeBtn_clicked()
 
     if (dialog.exec() == QDialog::Accepted) {
         Employee emp = dialog.getEmployee();
+        Team selectedTeam = m_db.getTeamByName(emp.getDepartment());
+        int currentTeamCount = m_db.getTeamMemberCount(emp.getDepartment());
+        QString placementNote;
+
+        // If selected team does not match employee's game knowledge or already has 7 people,
+        // automatically place them in a compatible team (< 7 staff) based on their game knowledge
+        if (selectedTeam.getId() > 0 && (!selectedTeam.acceptsEmployee(emp) || currentTeamCount >= RotationScheduler::MAX_SHIFT_STAFF)) {
+            QString reason = !selectedTeam.acceptsEmployee(emp)
+                ? QString("%1 requires games [%2]").arg(selectedTeam.getName(), selectedTeam.getUniqueGames().join(", "))
+                : QString("%1 is at 7-staff shift limit").arg(selectedTeam.getName());
+
+            for (const Team& candidate : m_db.getAllTeams()) {
+                if (candidate.acceptsEmployee(emp) && m_db.getTeamMemberCount(candidate.getName()) < RotationScheduler::MAX_SHIFT_STAFF) {
+                    emp.setDepartment(candidate.getName());
+                    placementNote = QString(" (%1 -> placed in %2 by game knowledge)").arg(reason, candidate.getName());
+                    break;
+                }
+            }
+        }
+
         if (m_db.addEmployee(emp)) {
             loadEmployeesTable();
             loadTeamsTable();
-            QMessageBox::information(this, "Success", "Employee added successfully!");
+            on_generateRotationBtn_clicked();
+            logRecentChange(QString("Added employee '%1' to %2 [Games: %3]%4")
+                            .arg(emp.getName(), emp.getDepartment(), emp.getGameKnowledge(), placementNote));
         } else {
-            QMessageBox::warning(this, "Error", "Failed to add employee: " + m_db.getLastError());
+            logRecentChange("Failed to add employee: " + m_db.getLastError(), true);
         }
     }
 }
@@ -437,9 +578,11 @@ void MainWindow::on_editEmployeeBtn_clicked()
         if (m_db.updateEmployee(emp)) {
             loadEmployeesTable();
             loadTeamsTable();
-            QMessageBox::information(this, "Success", "Employee updated successfully!");
+            on_generateRotationBtn_clicked();
+            logRecentChange(QString("Updated employee [#%1] %2 (Team: %3 | Games: %4)")
+                            .arg(emp.getId()).arg(emp.getName(), emp.getDepartment(), emp.getGameKnowledge()));
         } else {
-            QMessageBox::warning(this, "Error", "Failed to update employee: " + m_db.getLastError());
+            logRecentChange("Failed to update employee: " + m_db.getLastError(), true);
         }
     }
 }
@@ -453,6 +596,7 @@ void MainWindow::on_deleteEmployeeBtn_clicked()
     }
     
     int employeeId = ui->employeesTable->item(row, 0)->text().toInt();
+    QString empName = ui->employeesTable->item(row, 1)->text();
     QMessageBox::StandardButton reply = QMessageBox::question(this, "Confirm Delete", 
                                                               "Are you sure you want to delete this employee?",
                                                               QMessageBox::Yes | QMessageBox::No);
@@ -461,17 +605,12 @@ void MainWindow::on_deleteEmployeeBtn_clicked()
         if (m_db.deleteEmployee(employeeId)) {
             loadEmployeesTable();
             loadTeamsTable();
-            QMessageBox::information(this, "Success", "Employee deleted successfully!");
+            on_generateRotationBtn_clicked();
+            logRecentChange(QString("Deleted employee [#%1] %2").arg(employeeId).arg(empName));
         } else {
-            QMessageBox::warning(this, "Error", "Failed to delete employee: " + m_db.getLastError());
+            logRecentChange("Failed to delete employee: " + m_db.getLastError(), true);
         }
     }
-}
-
-void MainWindow::on_refreshEmployeesBtn_clicked()
-{
-    loadEmployeesTable();
-    QMessageBox::information(this, "Success", "Employees table refreshed!");
 }
 
 // Uniform actions
@@ -482,9 +621,11 @@ void MainWindow::on_addUniformBtn_clicked()
         Uniform uniform = dialog.getUniform();
         if (m_db.addUniform(uniform)) {
             loadUniformsTable();
-            QMessageBox::information(this, "Success", "Uniform added successfully!");
+            logRecentChange(QString("Added uniform '%1' (Team: %2, Size: %3, Qty: %4)")
+                            .arg(uniform.getType(), uniform.getTeam(), uniform.getSize())
+                            .arg(uniform.getQuantity()));
         } else {
-            QMessageBox::warning(this, "Error", "Failed to add uniform: " + m_db.getLastError());
+            logRecentChange("Failed to add uniform: " + m_db.getLastError(), true);
         }
     }
 }
@@ -507,9 +648,10 @@ void MainWindow::on_editUniformBtn_clicked()
         uniform.setId(uniformId);
         if (m_db.updateUniform(uniform)) {
             loadUniformsTable();
-            QMessageBox::information(this, "Success", "Uniform updated successfully!");
+            logRecentChange(QString("Updated uniform '%1' (Size: %2, Qty: %3)")
+                            .arg(uniform.getType(), uniform.getSize()).arg(uniform.getQuantity()));
         } else {
-            QMessageBox::warning(this, "Error", "Failed to update uniform: " + m_db.getLastError());
+            logRecentChange("Failed to update uniform: " + m_db.getLastError(), true);
         }
     }
 }
@@ -523,6 +665,7 @@ void MainWindow::on_deleteUniformBtn_clicked()
     }
     
     int uniformId = ui->uniformsTable->item(row, 0)->text().toInt();
+    QString uniType = ui->uniformsTable->item(row, 1)->text();
     QMessageBox::StandardButton reply = QMessageBox::question(this, "Confirm Delete", 
                                                               "Are you sure you want to delete this uniform?",
                                                               QMessageBox::Yes | QMessageBox::No);
@@ -530,17 +673,11 @@ void MainWindow::on_deleteUniformBtn_clicked()
     if (reply == QMessageBox::Yes) {
         if (m_db.deleteUniform(uniformId)) {
             loadUniformsTable();
-            QMessageBox::information(this, "Success", "Uniform deleted successfully!");
+            logRecentChange(QString("Deleted uniform '%1' (ID: %2)").arg(uniType).arg(uniformId));
         } else {
-            QMessageBox::warning(this, "Error", "Failed to delete uniform: " + m_db.getLastError());
+            logRecentChange("Failed to delete uniform: " + m_db.getLastError(), true);
         }
     }
-}
-
-void MainWindow::on_refreshUniformsBtn_clicked()
-{
-    loadUniformsTable();
-    QMessageBox::information(this, "Success", "Uniforms table refreshed!");
 }
 
 // Issue / Return actions
@@ -556,9 +693,12 @@ void MainWindow::on_issueUniformBtn_clicked()
             loadIssuesTable();
             loadUniformsTable();
             loadEmployeesTable();
-            QMessageBox::information(this, "Success", "Uniform issued successfully!");
+            Employee emp = m_db.getEmployee(issue.getEmployeeId());
+            Uniform uni = m_db.getUniform(issue.getUniformId());
+            logRecentChange(QString("Issued '%1' (Size %2) to [#%3] %4")
+                            .arg(uni.getType(), uni.getSize()).arg(emp.getId()).arg(emp.getName()));
         } else {
-            QMessageBox::warning(this, "Error", "Failed to issue uniform: " + m_db.getLastError());
+            logRecentChange("Failed to issue uniform: " + m_db.getLastError(), true);
         }
     }
 }
@@ -572,18 +712,14 @@ void MainWindow::on_returnUniformBtn_clicked()
     }
     
     int issueId = ui->issuesTable->item(row, 0)->text().toInt();
+    QString empLabel = ui->issuesTable->item(row, 1)->text();
+    QString uniType = ui->issuesTable->item(row, 2)->text();
     if (m_db.returnUniform(issueId, QDate::currentDate().toString("yyyy-MM-dd"))) {
         loadIssuesTable();
         loadUniformsTable();
         loadEmployeesTable();
-        QMessageBox::information(this, "Success", "Uniform returned successfully!");
+        logRecentChange(QString("Returned uniform '%1' from %2").arg(uniType, empLabel));
     } else {
-        QMessageBox::warning(this, "Error", "Failed to return uniform: " + m_db.getLastError());
+        logRecentChange("Failed to return uniform: " + m_db.getLastError(), true);
     }
-}
-
-void MainWindow::on_refreshIssuesBtn_clicked()
-{
-    loadIssuesTable();
-    QMessageBox::information(this, "Success", "Issues table refreshed!");
 }
