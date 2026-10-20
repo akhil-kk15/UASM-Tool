@@ -393,37 +393,61 @@ QList<ReassignmentResult> RotationScheduler::relocateOverflowStaff(const QString
     for (const Team& sourceTeam : teamsToCheck) {
         QList<Employee> members = m_dbManager->getEmployeesByTeam(sourceTeam.getName());
         int maxCap = sourceTeam.getMaxStaff() > 0 ? qMin(sourceTeam.getMaxStaff(), MAX_SHIFT_STAFF) : MAX_SHIFT_STAFF;
-        if (members.size() <= maxCap) {
+        int overflowCount = members.size() - maxCap;
+        if (overflowCount <= 0) {
             continue;
         }
 
-        // Move employees beyond the 7th employee to compatible teams based on their game knowledge
-        for (int i = maxCap; i < members.size(); ++i) {
-            Employee overflowEmp = members[i];
+        // Move overflow employees to compatible teams (< 7 staff) based on their game knowledge.
+        // Prefer selecting from the tail of the roster (index >= maxCap), falling back to earlier
+        // multi-game members if a tail member only knows basic games and basic teams are full.
+        for (int m = 0; m < overflowCount; ++m) {
+            QList<Employee> currentMembers = m_dbManager->getEmployeesByTeam(sourceTeam.getName());
+            if (currentMembers.size() <= maxCap) {
+                break;
+            }
 
-            // Find best compatible target team with < 7 staff
             QList<Team> allTeams = m_dbManager->getAllTeams();
-            QString bestTarget = "";
-            int bestPriority = -1;
+            int chosenEmpId = -1;
+            QString chosenTarget = "";
+            int bestOverallScore = -1;
 
-            for (const Team& candidate : allTeams) {
-                if (candidate.getName() == sourceTeam.getName()) continue;
-                if (!candidate.acceptsEmployee(overflowEmp)) continue;
+            for (int idx = currentMembers.size() - 1; idx >= 0; --idx) {
+                const Employee& candEmp = currentMembers[idx];
+                QString empSize = candEmp.getUniformSize().isEmpty() ? "M" : candEmp.getUniformSize();
+                int tailBonus = (idx >= maxCap) ? 500 : 0;
 
-                int count = m_dbManager->getTeamMemberCount(candidate.getName());
-                int candMax = candidate.getMaxStaff() > 0 ? qMin(candidate.getMaxStaff(), MAX_SHIFT_STAFF) : MAX_SHIFT_STAFF;
-                if (count >= candMax) continue;
+                for (const Team& candidate : allTeams) {
+                    if (candidate.getName() == sourceTeam.getName()) continue;
+                    if (!candidate.acceptsEmployee(candEmp)) continue;
 
-                int priority = (candMax - count) * 10;
-                if (count < candidate.getMinStaff()) priority += 100;
-                if (priority > bestPriority) {
-                    bestPriority = priority;
-                    bestTarget = candidate.getName();
+                    int count = m_dbManager->getTeamMemberCount(candidate.getName());
+                    int candMax = candidate.getMaxStaff() > 0 ? qMin(candidate.getMaxStaff(), MAX_SHIFT_STAFF) : MAX_SHIFT_STAFF;
+                    if (count >= candMax) continue;
+
+                    int availUni = m_dbManager->getAvailableUniformCountForTeam(
+                        candidate.getName(), candidate.getUniformType(), empSize);
+                    if (availUni <= 0) continue;
+
+                    int priority = tailBonus + (candMax - count) * 15;
+                    if (count < candidate.getMinStaff()) {
+                        priority += 100; // Dire understaffing priority
+                    }
+                    if (candidate.isGameShowTeam() && candEmp.canHostGameShow()) {
+                        priority += 200; // Ensure Game Show studios get dual-role/host overflow first
+                    }
+                    priority += candidate.getUniqueGames().size() * 5;
+
+                    if (priority > bestOverallScore) {
+                        bestOverallScore = priority;
+                        chosenEmpId = candEmp.getId();
+                        chosenTarget = candidate.getName();
+                    }
                 }
             }
 
-            if (!bestTarget.isEmpty()) {
-                results.append(reassignEmployee(overflowEmp.getId(), bestTarget,
+            if (chosenEmpId > 0 && !chosenTarget.isEmpty()) {
+                results.append(reassignEmployee(chosenEmpId, chosenTarget,
                                                 "Relocate overflow beyond 7-staff shift limit"));
             }
         }

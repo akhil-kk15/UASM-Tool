@@ -46,6 +46,7 @@ private slots:
 
     // Rotation schedule slots
     void on_generateRotationBtn_clicked();
+    void on_autoBalanceRotationBtn_clicked();
     void on_rotationTeamCombo_currentIndexChanged(int index);
 
 private:
@@ -60,6 +61,7 @@ private:
     void loadTeamsTable();
     void loadTeamMembersTable(const QString& teamName);
     void populateRotationTeamCombo();
+    void syncRotationSlotToTeam();
     void displayRotationSchedule(const ShiftSchedule& schedule);
     void logRecentChange(const QString& message, bool isError = false);
 };

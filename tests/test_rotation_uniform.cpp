@@ -242,8 +242,50 @@ int main(int argc, char* argv[])
     }
     std::cout << "[PASS] 40 Mins Rotation Type verified (20 slots, max consecutive tables: " << maxConsecutive << ")." << std::endl;
 
-    std::cout << "\nALL TEST SUITE CHECKS COMPLETED SUCCESSFULLY!" << std::endl;
     db.closeDatabase();
     QFile::remove(testDbName);
+
+    // 14. Verify full 70/30 seed database auto-balances all 15 teams to 7/7 Optimal (30 Mins rotation)
+    const QString demoTestDbName = "test_demo_70_30.db";
+    QFile::remove(demoTestDbName);
+    if (QFile::exists("uniformmanagement.db")) {
+        QFile::copy("uniformmanagement.db", demoTestDbName);
+    } else if (QFile::exists("../uniformmanagement.db")) {
+        QFile::copy("../uniformmanagement.db", demoTestDbName);
+    }
+
+    DatabaseManager demoDb;
+    assert(demoDb.initializeDatabase(demoTestDbName));
+    QList<Employee> allDemoEmps = demoDb.getAllEmployees();
+    assert(allDemoEmps.size() == 105 && "Demo database must have 105 employees");
+    int multiGameCount = 0;
+    int basicGameCount = 0;
+    for (const Employee& emp : allDemoEmps) {
+        if (emp.getKnownGamesList().size() >= 3) {
+            multiGameCount++;
+        } else {
+            basicGameCount++;
+        }
+    }
+    assert(multiGameCount == 74 && basicGameCount == 31 && "70/30 game knowledge ratio (74 multi-game / 31 basic) must hold");
+    std::cout << "[PASS] 70/30 Game Knowledge distribution verified (" << multiGameCount << " multi-game / "
+              << basicGameCount << " basic = 70.5% / 29.5%)." << std::endl;
+
+    RotationScheduler demoScheduler(&demoDb);
+    QList<ReassignmentResult> demoMoves = demoScheduler.relocateOverflowStaff();
+    assert(demoMoves.size() == 13 && "All 13 overflow employees must be reassigned during Auto-Balance");
+    for (const ReassignmentResult& res : demoMoves) {
+        assert(res.success && "Every Auto-Balance reassignment must succeed");
+    }
+    for (const Team& t : demoDb.getAllTeams()) {
+        int staff = demoDb.getTeamMemberCount(t.getName());
+        assert(staff == 7 && "Every one of the 15 teams must balance to 7/7 Optimal");
+        assert(demoScheduler.recommendSlotMinutes(t, staff) == 30 && "Every balanced team must use 30 Mins rotation");
+    }
+    std::cout << "[PASS] Demo Auto-Balance verified: all 15 teams balanced to 7/7 Optimal (30 Mins shift rotation)." << std::endl;
+    demoDb.closeDatabase();
+    QFile::remove(demoTestDbName);
+
+    std::cout << "\nALL TEST SUITE CHECKS COMPLETED SUCCESSFULLY!" << std::endl;
     return 0;
 }

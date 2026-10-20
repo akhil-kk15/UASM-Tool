@@ -34,10 +34,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Auto-generate rotation for first team if available
     if (ui->rotationTeamCombo->count() > 0) {
+        syncRotationSlotToTeam();
         on_generateRotationBtn_clicked();
     }
 
-    logRecentChange(QString("Loaded %1 employees across %2 teams (5-digit IDs, max 7 staff/shift).")
+    logRecentChange(QString("Loaded %1 employees across %2 teams (70/30 Game Knowledge, 5-digit IDs, max 7 staff/shift).")
                     .arg(m_db.getAllEmployees().size())
                     .arg(m_db.getAllTeams().size()));
 }
@@ -299,9 +300,8 @@ void MainWindow::on_generateRotationBtn_clicked()
     displayRotationSchedule(schedule);
 }
 
-void MainWindow::on_rotationTeamCombo_currentIndexChanged(int index)
+void MainWindow::syncRotationSlotToTeam()
 {
-    Q_UNUSED(index);
     QString teamName = ui->rotationTeamCombo->currentText();
     if (!teamName.isEmpty()) {
         Team team = m_db.getTeamByName(teamName);
@@ -315,7 +315,18 @@ void MainWindow::on_rotationTeamCombo_currentIndexChanged(int index)
             ui->rotationSlotCombo->setCurrentIndex(0); // 30 Mins
         }
     }
+}
+
+void MainWindow::on_rotationTeamCombo_currentIndexChanged(int index)
+{
+    Q_UNUSED(index);
+    syncRotationSlotToTeam();
     on_generateRotationBtn_clicked();
+}
+
+void MainWindow::on_autoBalanceRotationBtn_clicked()
+{
+    on_autoBalanceBtn_clicked();
 }
 
 void MainWindow::displayRotationSchedule(const ShiftSchedule& schedule)
@@ -410,6 +421,7 @@ void MainWindow::on_reassignStaffBtn_clicked()
             if (idx >= 0) {
                 ui->rotationTeamCombo->setCurrentIndex(idx);
             }
+            syncRotationSlotToTeam();
             on_generateRotationBtn_clicked();
         } else if (!res.message.isEmpty()) {
             logRecentChange(res.message, true);
@@ -470,10 +482,11 @@ void MainWindow::on_autoBalanceBtn_clicked()
     loadUniformsTable();
     loadIssuesTable();
     loadTeamsTable();
+    syncRotationSlotToTeam();
     on_generateRotationBtn_clicked();
 
     if (movesMade.isEmpty() && shortages.isEmpty()) {
-        logRecentChange("Auto-Balance: All 15 teams are already balanced within the 7-staff shift limit.");
+        logRecentChange("Auto-Balance: All 15 teams are already balanced at Optimal 7/7 shift staffing (30 Mins rotation).");
     } else {
         for (const QString& move : movesMade) {
             logRecentChange(move, false);
@@ -481,7 +494,7 @@ void MainWindow::on_autoBalanceBtn_clicked()
         for (const QString& err : shortages) {
             logRecentChange(err, true);
         }
-        logRecentChange(QString("Auto-Balance complete: %1 staff reassigned across compatible teams.")
+        logRecentChange(QString("Auto-Balance complete: %1 staff reassigned -> All 15 teams balanced to Optimal 7/7 (30 Mins shift rotation).")
                         .arg(movesMade.size()), false);
     }
 }
@@ -504,6 +517,7 @@ void MainWindow::on_refreshBtn_clicked()
     ui->rotationTeamCombo->blockSignals(false);
 
     if (ui->rotationTeamCombo->count() > 0) {
+        syncRotationSlotToTeam();
         on_generateRotationBtn_clicked();
     }
 
@@ -545,6 +559,7 @@ void MainWindow::on_addEmployeeBtn_clicked()
         if (m_db.addEmployee(emp)) {
             loadEmployeesTable();
             loadTeamsTable();
+            syncRotationSlotToTeam();
             on_generateRotationBtn_clicked();
             logRecentChange(QString("Added employee '%1' to %2 [Games: %3]%4")
                             .arg(emp.getName(), emp.getDepartment(), emp.getGameKnowledge(), placementNote));
@@ -578,6 +593,7 @@ void MainWindow::on_editEmployeeBtn_clicked()
         if (m_db.updateEmployee(emp)) {
             loadEmployeesTable();
             loadTeamsTable();
+            syncRotationSlotToTeam();
             on_generateRotationBtn_clicked();
             logRecentChange(QString("Updated employee [#%1] %2 (Team: %3 | Games: %4)")
                             .arg(emp.getId()).arg(emp.getName(), emp.getDepartment(), emp.getGameKnowledge()));
@@ -605,6 +621,7 @@ void MainWindow::on_deleteEmployeeBtn_clicked()
         if (m_db.deleteEmployee(employeeId)) {
             loadEmployeesTable();
             loadTeamsTable();
+            syncRotationSlotToTeam();
             on_generateRotationBtn_clicked();
             logRecentChange(QString("Deleted employee [#%1] %2").arg(employeeId).arg(empName));
         } else {

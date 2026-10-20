@@ -487,6 +487,13 @@
              </widget>
             </item>
             <item>
+             <widget class="QPushButton" name="autoBalanceRotationBtn">
+              <property name="text">
+               <string>Auto-Balance Shift</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <spacer name="horizontalSpacer_rot">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>

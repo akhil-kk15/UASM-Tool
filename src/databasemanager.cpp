@@ -83,14 +83,19 @@ bool DatabaseManager::initializeDatabase(const QString& dbPath)
         int uniformCount = 0;
         int teamCount = 0;
         int minEmpId = 0;
+        bool outdatedSeed = false;
         QSqlQuery countQuery("SELECT COUNT(*) FROM uniforms");
         if (countQuery.next()) uniformCount = countQuery.value(0).toInt();
         QSqlQuery teamCountQuery("SELECT COUNT(*) FROM teams");
         if (teamCountQuery.next()) teamCount = teamCountQuery.value(0).toInt();
         QSqlQuery minEmpQuery("SELECT COALESCE(MIN(id), 0) FROM employees");
         if (minEmpQuery.next()) minEmpId = minEmpQuery.value(0).toInt();
+        QSqlQuery checkSeedQuery("SELECT game_knowledge FROM employees WHERE id = 10027");
+        if (checkSeedQuery.next() && checkSeedQuery.value(0).toString() == QStringLiteral("Blackjack, Roulette")) {
+            outdatedSeed = true;
+        }
 
-        if (uniformCount == 0 || teamCount < 15 || (minEmpId > 0 && minEmpId < 10000)) {
+        if (uniformCount == 0 || teamCount < 15 || (minEmpId > 0 && minEmpId < 10000) || outdatedSeed) {
             const QString appDir = QCoreApplication::applicationDirPath();
             const QStringList sqlCandidates = {
                 QDir::current().filePath(QStringLiteral("seed_test_data.sql")),
